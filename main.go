@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -41,7 +40,31 @@ type ValCurs struct { //эта структура сгененрирована �
 	} `xml:"Valute"`
 }
 
+type Curs struct {
+	Date   string
+	Valute [34]struct {
+		Name     string
+		CharCode string
+		Value    float64
+	}
+}
+
+func ValCursToCurs() {
+	var CursOfToday Curs
+	CursOfToday.Date = rate.Date
+	for i := 0; i < 34; i++ {
+		CursOfToday.Valute[i].Name = rate.Valute[i].Name
+		CursOfToday.Valute[i].CharCode = rate.Valute[i].CharCode
+		CursOfToday.Valute[i].Value = stringToFloat(stringConvert(rate.Valute[i].Value))
+	}
+	fmt.Println(CursOfToday)
+}
+
 func currencySelection() (a int) {
+	/*
+		Вывод на экран списка всех доступных валют
+	*/
+
 	fmt.Println("Доступные валюты:")
 	for j := 0; j < 34; j++ {
 		fmt.Println(j+1, "--", rate.Valute[j].CharCode, "--", rate.Valute[j].Name)
@@ -78,7 +101,8 @@ func stringToFloat(in string) float64 {
 	out, _ := strconv.ParseFloat(in, 8)
 	return out
 }
-func main() {
+
+func httpGet() ValCurs {
 	responce, err := http.Get("https://www.cbr-xml-daily.ru/daily_utf8.xml")
 	if err != nil {
 		log.Fatal(err)
@@ -94,35 +118,62 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// не имею ни малейшего понятия, как работает весь предыдущий кусок и можно ли его убрать в отдельную функцию...
+	return rate
+}
+
+func main() {
+	httpGet()
+	//fmt.Println(rate)
+	/*
+		responce, err := http.Get("https://www.cbr-xml-daily.ru/daily_utf8.xml")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer responce.Body.Close()
+
+		byteValue, err := ioutil.ReadAll(responce.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = xml.Unmarshal(byteValue, &rate)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// не имею ни малейшего понятия, как работает весь предыдущий кусок и можно ли его убрать в отдельную функцию...
+	*/
 
 	//a = currencySelection()
-	a = 10
-	ratePrint(a)
-	fmt.Println("Введите дату покупки в формате ДД.ММ.ГГГГ:")
-	fmt.Scanln(&dateOfPurchase)
+	/*
+		a = 10
+		ratePrint(a)
+		fmt.Println("Введите дату покупки в формате ДД.ММ.ГГГГ:")
+		fmt.Scanln(&dateOfPurchase)
 
-	rateValuteNow = stringConvert(rate.Valute[a].Value) // Замена запятой на точку
-	rateOfToday = stringToFloat(rateValuteNow)          // конвертация в float64
+		rateValuteNow = stringConvert(rate.Valute[a].Value) // Замена запятой на точку
+		rateOfToday = stringToFloat(rateValuteNow)          // конвертация в float64
 
-	if dateOfPurchase != rate.Date {
-		fmt.Println("Введите курс покупки (формат $$.$$$$):")
-		fmt.Scanln(&rateOfPurchase)
-	} else {
+		if dateOfPurchase != rate.Date {
+			fmt.Println("Введите курс покупки (формат $$.$$$$):")
+			fmt.Scanln(&rateOfPurchase)
+		} else {
 
-		rateOfPurchase = rateOfToday
-	}
+			rateOfPurchase = rateOfToday
+		}
 
-	fmt.Println("Введите количество купленной валюты:")
-	fmt.Scanln(&amountOfСurrency)
+		fmt.Println("Введите количество купленной валюты:")
+		fmt.Scanln(&amountOfСurrency)
 
-	sumOfPurchase = rateOfPurchase * amountOfСurrency // Сумма покупки
-	fmt.Println("Сумма покупки:", sumOfPurchase)
+		sumOfPurchase = rateOfPurchase * amountOfСurrency // Сумма покупки
+		fmt.Println("Сумма покупки:", sumOfPurchase)
 
-	todayCurrency = amountOfСurrency * rateOfToday // Стоимость по текущему курсу
-	fmt.Println("Стоимость по текущему курсу:", todayCurrency)
+		todayCurrency = amountOfСurrency * rateOfToday // Стоимость по текущему курсу
+		fmt.Println("Стоимость по текущему курсу:", todayCurrency)
 
-	percentOfRate = ((rateOfToday / rateOfPurchase) - 1) * 10000
-	percentOfRate = math.Round(percentOfRate) * 0.01
-	fmt.Println("Текущий результат: \n", percentOfRate, "%\n", todayCurrency-sumOfPurchase, "руб.")
+		percentOfRate = ((rateOfToday / rateOfPurchase) - 1) * 10000
+		percentOfRate = math.Round(percentOfRate) * 0.01
+		fmt.Println("Текущий результат: \n", percentOfRate, "%\n", todayCurrency-sumOfPurchase, "руб.")
+		fmt.Println("----------------------------------------------------------------")
+	*/
+	ValCursToCurs()
 }
