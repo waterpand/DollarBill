@@ -8,6 +8,7 @@ package main
 */
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
@@ -21,7 +22,8 @@ import (
 
 var (
 	rate                                                                                       ValCurs
-	CursOfToday                                                                                Curs
+	CursOfToday, C1                                                                            Curs
+	f                                                                                          []byte
 	b                                                                                          int = 10
 	a, i, c                                                                                    int
 	dateOfPurchase, rateValuteNow                                                              string
@@ -192,13 +194,46 @@ func httpGet() ValCurs { // вычитка из xml
 	return rate
 }
 
+func httpGet2() ValCurs { // вычитка из xml
+	/*
+		Эта функция берет данные из банковского xml-файла формирует переменную rate типа ValCurs
+		Но я не имею ни малейшего понятия, как это работает
+	*/
+	fmt.Println("Запрос...https://www.cbr-xml-daily.ru/daily_utf8.xml")
+	responce, err := http.Get("https://www.cbr-xml-daily.ru/daily_utf8.xml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer responce.Body.Close()
+
+	byteValue, err := ioutil.ReadAll(responce.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	file, err := os.Create("D:/_development/_projects/DollarBill/ValCurs.xml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	file.Write(byteValue)
+
+	err = xml.Unmarshal(byteValue, &rate)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Данные получены и записаны в файл", file.Name())
+	mainMenu()
+	return rate
+}
+
 func mainMenu() {
 	fmt.Printf("Меню:\n1 -- Вычитать данные из xml\n2 -- Записать данные в структуру\n3 -- Вывести список доступных валют\n4 -- Посмотреть курс конкретной валюты/выбрать валюту\n5 -- Произвести рассчет\n0 -- Выход из программы\n")
 	fmt.Scanln(&b)
 
 	switch b {
 	case 1:
-		httpGet()
+		httpGet2()
 	case 2:
 		ValCursToCurs()
 	case 3:
@@ -210,6 +245,20 @@ func mainMenu() {
 	case 6:
 		httpGet()
 		ValCursToCurs()
+	case 7:
+		f, err := json.Marshal(CursOfToday)
+		if err != nil {
+			log.Println(err)
+		}
+		fmt.Println(f)
+		mainMenu()
+	case 8:
+		err := json.Unmarshal(f, &C1)
+		if err != nil {
+			log.Println(err)
+		}
+		fmt.Println(C1)
+		mainMenu()
 	case 0:
 		fmt.Println("Выход")
 		os.Exit(0)
