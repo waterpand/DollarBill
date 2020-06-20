@@ -8,7 +8,6 @@ package main
 */
 
 import (
-	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
@@ -21,7 +20,7 @@ import (
 )
 
 var (
-	rate                                                                                       ValCurs
+	rate, C2                                                                                   ValCurs
 	CursOfToday, C1                                                                            Curs
 	f                                                                                          []byte
 	b                                                                                          int = 10
@@ -62,6 +61,18 @@ func ValCursToCurs() { //xml --> struct
 		CursOfToday.Valute[i].Name = rate.Valute[i].Name
 		CursOfToday.Valute[i].CharCode = rate.Valute[i].CharCode
 		CursOfToday.Valute[i].Value = stringToFloat(stringConvert(rate.Valute[i].Value))
+	}
+	fmt.Println("...complete")
+	mainMenu()
+}
+
+func ValCursToCurs2() { //file.xml --> struct
+	fmt.Print("Запись полученных данных в структуру CursOfToday")
+	CursOfToday.Date = rate.Date
+	for i := 0; i < 34; i++ {
+		CursOfToday.Valute[i].Name = C2.Valute[i].Name
+		CursOfToday.Valute[i].CharCode = C2.Valute[i].CharCode
+		CursOfToday.Valute[i].Value = stringToFloat(stringConvert(C2.Valute[i].Value))
 	}
 	fmt.Println("...complete")
 	mainMenu()
@@ -211,7 +222,7 @@ func httpGet2() ValCurs { // вычитка из xml
 		log.Fatal(err)
 	}
 
-	file, err := os.Create("D:/_development/_projects/DollarBill/ValCurs.xml")
+	file, err := os.Create("D:/_development/_projects/DollarBill/ValCurs.bin")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -227,6 +238,26 @@ func httpGet2() ValCurs { // вычитка из xml
 	return rate
 }
 
+func readTheFile() {
+	file, err := os.Open("D:/_development/_projects/DollarBill/ValCurs.bin")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer file.Close()
+
+	data, err := ioutil.ReadFile("D:/_development/_projects/DollarBill/ValCurs.bin")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = xml.Unmarshal(data, &C2)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(C2)
+}
+
 func mainMenu() {
 	fmt.Printf("Меню:\n1 -- Вычитать данные из xml\n2 -- Записать данные в структуру\n3 -- Вывести список доступных валют\n4 -- Посмотреть курс конкретной валюты/выбрать валюту\n5 -- Произвести рассчет\n0 -- Выход из программы\n")
 	fmt.Scanln(&b)
@@ -235,7 +266,7 @@ func mainMenu() {
 	case 1:
 		httpGet2()
 	case 2:
-		ValCursToCurs()
+		ValCursToCurs2()
 	case 3:
 		currencySelection3()
 	case 4:
@@ -246,19 +277,10 @@ func mainMenu() {
 		httpGet()
 		ValCursToCurs()
 	case 7:
-		f, err := json.Marshal(CursOfToday)
-		if err != nil {
-			log.Println(err)
-		}
-		fmt.Println(f)
+		readTheFile()
 		mainMenu()
 	case 8:
-		err := json.Unmarshal(f, &C1)
-		if err != nil {
-			log.Println(err)
-		}
-		fmt.Println(C1)
-		mainMenu()
+		ValCursToCurs2()
 	case 0:
 		fmt.Println("Выход")
 		os.Exit(0)
