@@ -12,12 +12,17 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
 var (
-	rate ValCurs
-	a, i int
+	rate                                                                                       ValCurs
+	a, i                                                                                       int
+	dateOfPurchase, rateValuteNow                                                              string
+	rateOfPurchase, amountOfСurrency, sumOfPurchase, todayCurrency, rateOfToday, percentOfRate float64
 )
 
 type ValCurs struct { //эта структура сгененрирована автоматически на сайте https://www.onlinetool.io/xmltogo/ по ссылке ЦБ (https://www.cbr-xml-daily.ru/daily_utf8.xml)
@@ -36,12 +41,22 @@ type ValCurs struct { //эта структура сгененрирована �
 	} `xml:"Valute"`
 }
 
-func currencySelection() {
+func currencySelection() (a int) {
 	fmt.Println("Доступные валюты:")
 	for j := 0; j < 34; j++ {
 		fmt.Println(j+1, "--", rate.Valute[j].CharCode, "--", rate.Valute[j].Name)
 	}
 
+	fmt.Println("введите номер валюты:")
+	for i := 0; i < 1; {
+		fmt.Scanln(&a)
+		if a < 1 || a > 34 {
+			fmt.Println("Неверное число, попробуйте ещё раз:")
+		} else {
+			i = 1
+		}
+	}
+	return a - 1
 }
 
 func ratePrint(i int) { // Вывод на печать курса валюты в формате: USD -- 69,5725. Коды для валют: 10 - USD, 11 - EUR, 30 - CHF.
@@ -66,16 +81,33 @@ func main() {
 	}
 	// не имею ни малейшего понятия, как работает весь предыдущий кусок и можно ли его убрать в отдельную функцию...
 
-	currencySelection()
-	fmt.Println("введите номер валюты:")
-	for i := 0; i < 1; {
-		fmt.Scanln(&a)
-		if a < 1 || a > 34 {
-			fmt.Println("Неверное число, попробуйте ещё раз:")
-		} else {
-			i = 1
-		}
-	}
-	ratePrint(a - 1)
+	//a = currencySelection()
+	a = 10
+	ratePrint(a)
+	fmt.Println("Введите дату покупки в формате ДД.ММ.ГГГГ:")
+	fmt.Scanln(&dateOfPurchase)
 
+	rateValuteNow = strings.Replace(rate.Valute[a].Value, ",", ".", -1) // Замена запятой на точку
+	rateOfToday, _ = strconv.ParseFloat(rateValuteNow, 8)
+
+	if dateOfPurchase != rate.Date {
+		fmt.Println("Введите курс покупки (формат $$.$$$$):")
+		fmt.Scanln(&rateOfPurchase)
+	} else {
+
+		rateOfPurchase = rateOfToday
+	}
+
+	fmt.Println("Введите количество купленной валюты:")
+	fmt.Scanln(&amountOfСurrency)
+
+	sumOfPurchase = rateOfPurchase * amountOfСurrency // Сумма покупки
+	fmt.Println("Сумма покупки:", sumOfPurchase)
+
+	todayCurrency = amountOfСurrency * rateOfToday // Стоимость по текущему курсу
+	fmt.Println("Стоимость по текущему курсу:", todayCurrency)
+
+	percentOfRate = ((rateOfToday / rateOfPurchase) - 1) * 10000
+	percentOfRate = math.Round(percentOfRate) * 0.01
+	fmt.Println("Текущий результат: \n", percentOfRate, "%\n", todayCurrency-sumOfPurchase, "руб.")
 }
