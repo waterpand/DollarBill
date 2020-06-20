@@ -17,9 +17,10 @@ import (
 
 var (
 	rate ValCurs
+	a, i int
 )
 
-type ValCurs struct {
+type ValCurs struct { //эта структура сгененрирована автоматически на сайте https://www.onlinetool.io/xmltogo/ по ссылке ЦБ (https://www.cbr-xml-daily.ru/daily_utf8.xml)
 	XMLName xml.Name `xml:"ValCurs"`
 	Text    string   `xml:",chardata"`
 	Date    string   `xml:"Date,attr"`
@@ -35,7 +36,15 @@ type ValCurs struct {
 	} `xml:"Valute"`
 }
 
-func ratePrint(i int) {
+func currencySelection() {
+	fmt.Println("Доступные валюты:")
+	for j := 0; j < 34; j++ {
+		fmt.Println(j+1, "--", rate.Valute[j].CharCode, "--", rate.Valute[j].Name)
+	}
+
+}
+
+func ratePrint(i int) { // Вывод на печать курса валюты в формате: USD -- 69,5725. Коды для валют: 10 - USD, 11 - EUR, 30 - CHF.
 	fmt.Println("		  ", rate.Valute[i].CharCode, "--", rate.Valute[i].Value)
 }
 
@@ -51,16 +60,22 @@ func main() {
 		log.Fatal(err)
 	}
 
-	//fmt.Println(string(byteValue))
-
 	err = xml.Unmarshal(byteValue, &rate)
 	if err != nil {
 		log.Fatal(err)
 	}
+	// не имею ни малейшего понятия, как работает весь предыдущий кусок и можно ли его убрать в отдельную функцию...
 
-	date := rate.Date // выдает дату, на которую даётся курс
-	fmt.Println("Курс на", date)
-	ratePrint(10)
-	ratePrint(11)
-	ratePrint(30)
+	currencySelection()
+	fmt.Println("введите номер валюты:")
+	for i := 0; i < 1; {
+		fmt.Scanln(&a)
+		if a < 1 || a > 34 {
+			fmt.Println("Неверное число, попробуйте ещё раз:")
+		} else {
+			i = 1
+		}
+	}
+	ratePrint(a - 1)
+
 }
