@@ -15,6 +15,10 @@ import (
 	"net/http"
 )
 
+var (
+	rate ValCurs
+)
+
 type ValCurs struct {
 	XMLName xml.Name `xml:"ValCurs"`
 	Text    string   `xml:",chardata"`
@@ -31,6 +35,10 @@ type ValCurs struct {
 	} `xml:"Valute"`
 }
 
+func ratePrint(i int) {
+	fmt.Println("		  ", rate.Valute[i].CharCode, "--", rate.Valute[i].Value)
+}
+
 func main() {
 	responce, err := http.Get("https://www.cbr-xml-daily.ru/daily_utf8.xml")
 	if err != nil {
@@ -45,16 +53,14 @@ func main() {
 
 	//fmt.Println(string(byteValue))
 
-	var (
-		rate ValCurs
-	)
 	err = xml.Unmarshal(byteValue, &rate)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	currency := rate.Valute[10].Name
 	date := rate.Date // выдает дату, на которую даётся курс
-	fmt.Println(currency)
-	fmt.Println(date)
+	fmt.Println("Курс на", date)
+	ratePrint(10)
+	ratePrint(11)
+	ratePrint(30)
 }
