@@ -63,6 +63,21 @@ func ratePrint(i int) { // Вывод на печать курса валюты 
 	fmt.Println("		  ", rate.Valute[i].CharCode, "--", rate.Valute[i].Value)
 }
 
+func stringConvert(in string) string {
+	/*
+		Эта функция меняет запятую на точку в данных, которые подтягиваются по xml, что их удобно было конвертировать в float64
+	*/
+	out := strings.Replace(in, ",", ".", -1) // Замена запятой на точку
+	return out
+}
+
+func stringToFloat(in string) float64 {
+	/*
+		Эта функция конвертирует тип string в тип float64
+	*/
+	out, _ := strconv.ParseFloat(in, 8)
+	return out
+}
 func main() {
 	responce, err := http.Get("https://www.cbr-xml-daily.ru/daily_utf8.xml")
 	if err != nil {
@@ -87,8 +102,8 @@ func main() {
 	fmt.Println("Введите дату покупки в формате ДД.ММ.ГГГГ:")
 	fmt.Scanln(&dateOfPurchase)
 
-	rateValuteNow = strings.Replace(rate.Valute[a].Value, ",", ".", -1) // Замена запятой на точку
-	rateOfToday, _ = strconv.ParseFloat(rateValuteNow, 8)
+	rateValuteNow = stringConvert(rate.Valute[a].Value) // Замена запятой на точку
+	rateOfToday = stringToFloat(rateValuteNow)          // конвертация в float64
 
 	if dateOfPurchase != rate.Date {
 		fmt.Println("Введите курс покупки (формат $$.$$$$):")
