@@ -18,17 +18,20 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var (
 	rate                                                                                       ValCurs
 	offlineRate                                                                                ValCurs
 	cursOfToday                                                                                Curs
+	op                                                                                         Order
 	f                                                                                          []byte
 	b                                                                                          int = 10
-	a, i, c                                                                                    int
+	a, i, c, d                                                                                 int
 	dateOfPurchase, rateValuteNow                                                              string
 	rateOfPurchase, amountOfСurrency, sumOfPurchase, todayCurrency, rateOfToday, percentOfRate float64
+	temp                                                                                       Transact
 )
 
 // ValCurs : сгененрирована автоматически на сайте https://www.onlinetool.io/xmltogo/ по ссылке ЦБ (https://www.cbr-xml-daily.ru/daily_utf8.xml)
@@ -56,6 +59,24 @@ type Curs struct {
 		CharCode string
 		Value    float64
 	}
+}
+
+// Order : структура для записи проведенных операция покупки/продажи валюты
+type Order struct {
+	CharCode    string     // название валюты
+	Transaction []Transact // структура Transact
+
+}
+
+// Transact : структура для записи и сохранения операций купли/продажи
+type Transact struct { // все параметры операции
+	IdOpp     int     // ID операции для навигации по срезу
+	CharCode  string  // название валюты
+	Operation bool    // 1-покупка 0-продажа
+	Price     float64 // курс
+	Date      string  // дата операции
+	Quantity  float64 // кол-во валюты
+	Flag      bool    // возможность исключить операцию из расчета
 }
 
 // ValCursToCurs : данная функция записывает данные полученные из xml в структуру CursOfToday
@@ -302,8 +323,10 @@ func readTheFile() {
 }
 
 func mainMenu() {
+	T := time.Date(2020, time.June, 21, 8, 5, 2, 0, time.Local)
 	fmt.Println()
-	fmt.Printf("Меню:\n1 -- Вычитать данные из xml, записать в файл ValCurs.bin и записать данные в структуру cursOfToday\n2 -- Прочитать информацию из файла и записать в структуру cursOfToday\n3 -- Вывести список доступных валют\n4 -- Посмотреть курс конкретной валюты/выбрать валюту\n5 -- Произвести рассчет\n0 -- Выход из программы\n")
+	fmt.Printf(T.Format("_2.1.2006"))
+	fmt.Printf(" // Меню:\n1 -- Вычитать данные из xml, записать в файл ValCurs.bin и записать данные в структуру cursOfToday\n2 -- Прочитать информацию из файла и записать в структуру cursOfToday\n3 -- Вывести список доступных валют\n4 -- Посмотреть курс конкретной валюты/выбрать валюту\n5 -- Произвести рассчет\n8 -- Техническое меню\n9 -- func main() \n0 -- Выход из программы\n")
 	fmt.Scanln(&b)
 
 	switch b {
@@ -319,14 +342,48 @@ func mainMenu() {
 		ratePrint2()
 	case 5:
 		rateCalculation()
+	case 8:
+		techMenu()
+	case 9:
+		fmt.Println("Выход из меню")
 	case 0:
 		fmt.Println("Выход")
 		os.Exit(0)
+
 	default:
 		fmt.Println("Введено неверное значение")
 		mainMenu()
 	}
 
+}
+
+func techMenu() {
+	fmt.Printf(" // Техническое меню:\n1 -- \n2 -- \n3 -- \n4 -- \n5 -- \n8 -- Возврвт в основное меню - mainMenu\n9 -- Выход в func main()\n0 -- Выход из программы\n")
+	fmt.Scanln(&b)
+
+	switch b {
+	case 1:
+
+	case 2:
+
+	case 3:
+
+	case 4:
+
+	case 5:
+
+	case 8:
+		mainMenu()
+	case 9:
+		fmt.Println("Выход из меню")
+	case 0:
+		fmt.Println("Выход")
+		os.Exit(0)
+
+	default:
+		fmt.Println("Введено неверное значение")
+		techMenu()
+	}
 }
 
 func rateCalculation() { // расчет по выбранной валюте
@@ -368,10 +425,53 @@ func rateCalculation() { // расчет по выбранной валюте
 	percentOfRate = math.Round(percentOfRate) * 0.01
 	fmt.Println("Текущий результат: \n", percentOfRate, "%\n", todayCurrency-sumOfPurchase, "руб.\n", offlineRate.Valute[a-1].Name, amountOfСurrency, "шт.")
 	fmt.Println("----------------------------------------------------------------")
+
+	fmt.Println("Запомнить результат? для сохранения - 1, для сброса - любое число")
+	fmt.Scanln(&d)
+	if c == 1 {
+		SafeOperation(cursOfToday.Valute[a-1].CharCode, dateOfPurchase, true, true, rateOfPurchase, amountOfСurrency)
+	}
+
+	mainMenu()
+}
+
+// SafeOperation : сохранение операции по покупке валюты / запись в структуру Order
+func SafeOperation(ChC, D string, Opp, Fl bool, Pr, Q float64) {
+
+	/*
+		Если произвести несколько операций с одной валютой, а потом заменить валюту и произвести еще одну операцию, то все опвалюта всех операций изменится
+		Варианты:
+		-- либо копать в сторону карт, чтобы для каждой валюты операции записывались отдельно
+		-- (пока выбран этот вариант) либо внести обозначение валюты внутрь структуры, чтобы каждую операцию можно было идентифицировать по валюте
+	*/
+
+	fmt.Println("Запись в структуру op (type Order):")
+	fmt.Println("Название валюты", ChC)
+	fmt.Println("Покупка или продажа (true - покупка)", Opp)
+	fmt.Println("цена покупки (курс)", Pr)
+	fmt.Println("Дата покупки", D)
+	fmt.Println("Количество валюты", Q)
+	fmt.Println("Учет операции (true - учитывать)", Fl)
+	fmt.Println()
+
+	temp.IdOpp = len(op.Transaction)
+	temp.CharCode = ChC
+	temp.Date = D
+	temp.Operation = Opp
+	temp.Price = Pr
+	temp.Quantity = Q
+	temp.Flag = Fl
+	op.Transaction = append(op.Transaction, temp)
+
+	fmt.Println(op)
+	fmt.Println(temp)
 	mainMenu()
 }
 
 func main() {
 	mainMenu()
-
+	fmt.Println("func main")
+	T := time.Date(2020, time.June, 21, 8, 5, 2, 0, time.Local)
+	fmt.Println(T.Format("_2.1.2006"))
+	fmt.Println(cursOfToday)
 }
