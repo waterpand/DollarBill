@@ -71,12 +71,11 @@ type Order struct {
 
 // Transact : структура для записи и сохранения операций купли/продажи
 type Transact struct { // все параметры операции
-	IDOpp     int     // ID операции для навигации по срезу
-	CharCode  string  // название валюты
-	Operation bool    // 1-покупка 0-продажа
-	Price     float64 // курс
 	Date      string  // дата операции
 	Quantity  float64 // кол-во валюты
+	CharCode  string  // название валюты
+	Price     float64 // курс
+	Operation bool    // 1-покупка 0-продажа
 	Flag      bool    // возможность исключить операцию из расчета
 }
 
@@ -366,7 +365,7 @@ func mainMenu() {
 }
 
 func techMenu() {
-	fmt.Printf(" // Техническое меню:\n1 -- \n2 -- Прочитать информацию из файла и записать в структуру cursOfToday\n3 -- \n4 -- \n5 -- \n8 -- Возврвт в основное меню - mainMenu\n9 -- Выход в func main()\n0 -- Выход из программы\n")
+	fmt.Printf(" // Техническое меню:\n1 -- \n2 -- Прочитать информацию из файла и записать в структуру cursOfToday\n3 -- Фильтр по текущей валюте \n4 -- \n5 -- \n8 -- Возврвт в основное меню - mainMenu\n9 -- Выход в func main()\n0 -- Выход из программы\n")
 	fmt.Scanln(&b)
 
 	switch b {
@@ -376,7 +375,8 @@ func techMenu() {
 		readTheFile()
 		ValCursToCurs2()
 	case 3:
-
+		FilterOp()
+		mainMenu()
 	case 4:
 
 	case 5:
@@ -465,7 +465,7 @@ func SafeOperation(ChC, D string, Opp, Fl bool, Pr, Q float64) {
 	fmt.Println()
 
 	op.Fresh = T.Format("_2.1.2006")
-	temp.IDOpp = len(op.Transaction)
+
 	temp.CharCode = ChC
 	temp.Date = D
 	temp.Operation = Opp
@@ -529,7 +529,7 @@ func WriteTheFile(op Order) {
 
 }
 
-// DelFromStruct : для удаления записей об операциях из структуры
+// DelFromStruct : вывод списка операций или удаления записей об операциях из структуры
 func DelFromStruct(k bool) {
 	fmt.Printf("\nСписок операций:\n")
 
@@ -551,6 +551,22 @@ func DelFromStruct(k bool) {
 	}
 
 	mainMenu()
+}
+
+// FilterOp : фильтр для валют
+func FilterOp() {
+	fmt.Println()
+	fmt.Println("Показаны только операции с текущей валютой: ", cursOfToday.Valute[a-1].CharCode, "--", cursOfToday.Valute[a-1].Name)
+	fmt.Println()
+
+	//tiker := cursOfToday.Valute[a-1].CharCode
+
+	for i, _ := range op.Transaction {
+		if op.Transaction[i].CharCode == cursOfToday.Valute[a-1].CharCode {
+			fmt.Println(i+1, op.Transaction[i])
+		}
+	}
+
 }
 
 func main() {
