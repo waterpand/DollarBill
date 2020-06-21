@@ -9,6 +9,7 @@ package main
 */
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
@@ -27,7 +28,7 @@ var (
 	cursOfToday                                                                                Curs
 	op                                                                                         Order
 	f                                                                                          []byte
-	b                                                                                          int = 10
+	b, e                                                                                       int = 10, 10
 	a, i, c, d                                                                                 int
 	dateOfPurchase, rateValuteNow                                                              string
 	rateOfPurchase, amountOfСurrency, sumOfPurchase, todayCurrency, rateOfToday, percentOfRate float64
@@ -268,8 +269,8 @@ func httpGet() ValCurs { // вычитка из xml
 	return rate
 }
 */
-
-func httpGet2() ValCurs { // вычитка из xml и запись в файл
+// вычитка из xml и запись в файл
+func httpGet2() ValCurs {
 	/*
 		Эта функция берет данные из банковского xml-файла формирует переменную rate типа ValCurs
 		Записывает эти данные в файл ValCurs.bin
@@ -287,7 +288,7 @@ func httpGet2() ValCurs { // вычитка из xml и запись в файл
 		log.Fatal(err)
 	}
 
-	file, err := os.Create("D:/_development/_projects/DollarBill/ValCurs.bin")
+	file, err := os.Create("D:/_development/_projects/DollarBill/ValCurs.bin") // создание файла
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -326,7 +327,8 @@ func mainMenu() {
 	T := time.Date(2020, time.June, 21, 8, 5, 2, 0, time.Local)
 	fmt.Println()
 	fmt.Printf(T.Format("_2.1.2006"))
-	fmt.Printf(" // Меню:\n1 -- Вычитать данные из xml, записать в файл ValCurs.bin и записать данные в структуру cursOfToday\n2 -- Прочитать информацию из файла и записать в структуру cursOfToday\n3 -- Вывести список доступных валют\n4 -- Посмотреть курс конкретной валюты/выбрать валюту\n5 -- Произвести рассчет\n8 -- Техническое меню\n9 -- func main() \n0 -- Выход из программы\n")
+	fmt.Print(" // ", cursOfToday.Valute[a-1].CharCode, " -- ", cursOfToday.Valute[a-1].Value)
+	fmt.Printf(" // Меню:\n1 -- Вычитать данные из xml, записать в файл ValCurs.bin и записать данные в структуру cursOfToday\n2 -- Вывести список доступных валют\n3 -- Сменить валюту\n4 -- Произвести рассчет\n5 -- Прочитать из файла историю операций\n6 -- Показать историю операций\n7 -- Записать историю операций в файл\n8 -- Техническое меню\n9 -- func main() \n0 -- Выход из программы\n")
 	fmt.Scanln(&b)
 
 	switch b {
@@ -334,14 +336,18 @@ func mainMenu() {
 		httpGet2()
 		ValCursToCurs()
 	case 2:
-		readTheFile()
-		ValCursToCurs2()
-	case 3:
 		currencySelection4()
-	case 4:
+	case 3:
 		ratePrint2()
-	case 5:
+	case 4:
 		rateCalculation()
+	case 5:
+		readTheFile2()
+	case 6:
+		fmt.Println(op)
+		mainMenu()
+	case 7:
+		WriteTheFile(op)
 	case 8:
 		techMenu()
 	case 9:
@@ -358,14 +364,15 @@ func mainMenu() {
 }
 
 func techMenu() {
-	fmt.Printf(" // Техническое меню:\n1 -- \n2 -- \n3 -- \n4 -- \n5 -- \n8 -- Возврвт в основное меню - mainMenu\n9 -- Выход в func main()\n0 -- Выход из программы\n")
+	fmt.Printf(" // Техническое меню:\n1 -- \n2 -- Прочитать информацию из файла и записать в структуру cursOfToday\n3 -- \n4 -- \n5 -- \n8 -- Возврвт в основное меню - mainMenu\n9 -- Выход в func main()\n0 -- Выход из программы\n")
 	fmt.Scanln(&b)
 
 	switch b {
 	case 1:
 
 	case 2:
-
+		readTheFile()
+		ValCursToCurs2()
 	case 3:
 
 	case 4:
@@ -463,13 +470,67 @@ func SafeOperation(ChC, D string, Opp, Fl bool, Pr, Q float64) {
 	temp.Flag = Fl
 	op.Transaction = append(op.Transaction, temp)
 
-	fmt.Println(op)
-	fmt.Println(temp)
+	fmt.Println("Все операции:", op)
+	fmt.Println()
+	fmt.Println("Текущая операция:", temp)
+
+	fmt.Println("1 - Записать в файл\n2 - выйти в меню")
+	fmt.Scanln(&e)
+	if e == 1 {
+		WriteTheFile(op)
+	}
 	mainMenu()
 }
 
-func main() {
+// readTheFile2 : Чтение из файла ValCurs.bin
+func readTheFile2() {
+	file, err := os.Open("D:/_development/_projects/DollarBill/OperationDamp.json")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer file.Close()
+
+	data, err := ioutil.ReadFile("D:/_development/_projects/DollarBill/OperationDamp.json")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = json.Unmarshal(data, &op)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(op)
+
 	mainMenu()
+}
+
+// WriteTheFile : данная функция записывает в файл данные из структуры с записями всех операций
+func WriteTheFile(op Order) {
+
+	byteValue, err := json.Marshal(op)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	file, err := os.Create("D:/_development/_projects/DollarBill/OperationDamp.json") // создание файла
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	file.Write(byteValue) //  cannot use op (type Order) as type []byte in argument to file.Write
+
+	fmt.Println("Данные записаны в файл", file.Name())
+	mainMenu()
+
+}
+
+func main() {
+	a = 11
+	readTheFile()
+	ValCursToCurs2()
+	defer mainMenu()
+
 	fmt.Println("func main")
 	T := time.Date(2020, time.June, 21, 8, 5, 2, 0, time.Local)
 	fmt.Println(T.Format("_2.1.2006"))
