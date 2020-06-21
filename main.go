@@ -64,14 +64,14 @@ type Curs struct {
 
 // Order : структура для записи проведенных операция покупки/продажи валюты
 type Order struct {
-	CharCode    string     // название валюты
+	Fresh       string
 	Transaction []Transact // структура Transact
 
 }
 
 // Transact : структура для записи и сохранения операций купли/продажи
 type Transact struct { // все параметры операции
-	IdOpp     int     // ID операции для навигации по срезу
+	IDOpp     int     // ID операции для навигации по срезу
 	CharCode  string  // название валюты
 	Operation bool    // 1-покупка 0-продажа
 	Price     float64 // курс
@@ -104,7 +104,7 @@ func ValCursToCurs2() {
 		cursOfToday.Valute[i].Value = stringToFloat(stringConvert(offlineRate.Valute[i].Value))
 	}
 	fmt.Println("...complete")
-	mainMenu()
+	//mainMenu()
 }
 
 /*
@@ -344,8 +344,7 @@ func mainMenu() {
 	case 5:
 		readTheFile2()
 	case 6:
-		fmt.Println(op)
-		mainMenu()
+		DelFromStruct(false)
 	case 7:
 		WriteTheFile(op)
 	case 8:
@@ -355,6 +354,9 @@ func mainMenu() {
 	case 0:
 		fmt.Println("Выход")
 		os.Exit(0)
+	case 11:
+		DelFromStruct(true)
+		mainMenu()
 
 	default:
 		fmt.Println("Введено неверное значение")
@@ -451,6 +453,7 @@ func SafeOperation(ChC, D string, Opp, Fl bool, Pr, Q float64) {
 		-- либо копать в сторону карт, чтобы для каждой валюты операции записывались отдельно
 		-- (пока выбран этот вариант) либо внести обозначение валюты внутрь структуры, чтобы каждую операцию можно было идентифицировать по валюте
 	*/
+	T := time.Date(2020, time.June, 21, 8, 5, 2, 0, time.Local)
 
 	fmt.Println("Запись в структуру op (type Order):")
 	fmt.Println("Название валюты", ChC)
@@ -461,7 +464,8 @@ func SafeOperation(ChC, D string, Opp, Fl bool, Pr, Q float64) {
 	fmt.Println("Учет операции (true - учитывать)", Fl)
 	fmt.Println()
 
-	temp.IdOpp = len(op.Transaction)
+	op.Fresh = T.Format("_2.1.2006")
+	temp.IDOpp = len(op.Transaction)
 	temp.CharCode = ChC
 	temp.Date = D
 	temp.Operation = Opp
@@ -525,10 +529,35 @@ func WriteTheFile(op Order) {
 
 }
 
+// DelFromStruct : для удаления записей об операциях из структуры
+func DelFromStruct(k bool) {
+	fmt.Printf("\nСписок операций:\n")
+
+	for i, _ := range op.Transaction {
+		fmt.Println(i+1, op.Transaction[i])
+	}
+
+	if k == true {
+		j := 100
+		fmt.Println("Выбрать номер удаляемой транзакции")
+		fmt.Scanln(&j)
+		j--
+
+		op.Transaction = append(op.Transaction[:j], op.Transaction[j+1:]...)
+
+		for i, _ := range op.Transaction {
+			fmt.Println(i+1, op.Transaction[i])
+		}
+	}
+
+	mainMenu()
+}
+
 func main() {
 	a = 11
 	readTheFile()
 	ValCursToCurs2()
+	readTheFile2()
 	defer mainMenu()
 
 	fmt.Println("func main")
