@@ -23,10 +23,10 @@ import (
 )
 
 var (
-	rate                                                                                       ValCurs
-	offlineRate                                                                                ValCurs
-	cursOfToday                                                                                Curs
+	rate, rateOld, offlineRate                                                                 ValCurs
+	cursOfToday, cursOfOldDay                                                                  Curs
 	op                                                                                         Order
+	archiveCurses                                                                              []Curs
 	f                                                                                          []byte
 	a, b, e                                                                                    int = 11, 10, 10
 	i, c, d                                                                                    int
@@ -108,6 +108,30 @@ func ValCursToCurs2(print, ret bool) { // print(true) - печатать стр�
 	if print == true {
 		fmt.Println(cursOfToday)
 	}
+	returnMenu(ret)
+}
+
+// ValCursToCurs3 : данная функция записывает данные полученные из фрхивного xml в структуру cursOfOldDay для последующей записи в []Curs
+func ValCursToCurs3(ret bool) {
+	/*
+	   Далее: записывать archiveCurses в файл, а перед append считывать файл и циклом проверять, нет ли там уже этих чисел (или не перед добавлением в срез, а сразу после запроса, чтобы лишний раз не парсить...)
+	*/
+
+	fmt.Println(rateOld.Date)
+	fmt.Print("Запись полученных данных в структуру cursOfOldDay")
+	cursOfOldDay.Date = rateOld.Date
+	for i := 0; i < 34; i++ {
+		cursOfOldDay.Valute[i].Name = rateOld.Valute[i].Name
+		cursOfOldDay.Valute[i].CharCode = rateOld.Valute[i].CharCode
+		cursOfOldDay.Valute[i].Value = stringToFloat(stringConvert(rateOld.Valute[i].Value))
+
+	}
+	fmt.Println("...complete")
+	fmt.Println(cursOfOldDay)
+
+	archiveCurses = append(archiveCurses, cursOfOldDay)
+	fmt.Println(archiveCurses)
+
 	returnMenu(ret)
 }
 
@@ -377,7 +401,7 @@ func mainMenu() {
 }
 
 func techMenu() {
-	fmt.Printf(" // Техническое меню:\n1 -- Вычитать данные из xml, записать в файл ValCurs.bin и записать данные в структуру cursOfToday\n2 -- Прочитать информацию из файла и записать в структуру cursOfToday\n3 -- Фильтр по текущей валюте \n4 -- Вывести список доступных валют \n5 -- Сменить валюту\n6 -- Прочитать из файла историю операций\n7 -- Записать историю операций в файл\n8 -- Возврвт в основное меню - mainMenu\n9 -- Выход в func main()\n0 -- Выход из программы\n")
+	fmt.Printf(" // Техническое меню:\n1 -- Вычитать данные из xml, записать в файл ValCurs.bin и записать данные в структуру cursOfToday\n2 -- Прочитать информацию из файла и записать в структуру cursOfToday\n3 -- Фильтр по текущей валюте \n4 -- Вывести список доступных валют \n5 -- Сменить валюту\n6 -- Прочитать из файла историю операций\n7 -- Записать историю операций в файл\n8 -- Возврвт в основное меню - mainMenu\n9 -- Выход в func main()\n11 -- Запрос архивного курса\n0 -- Выход из программы\n")
 	fmt.Scanln(&b)
 
 	switch b {
@@ -405,6 +429,9 @@ func techMenu() {
 		WriteTheFile(op, false)
 		fmt.Println("Выход")
 		os.Exit(0)
+	case 11:
+		CursArchive(false)
+		ValCursToCurs3(true)
 	default:
 		fmt.Println("Введено неверное значение")
 		techMenu()
@@ -599,6 +626,52 @@ func Balans(ret bool) {
 	fmt.Println("Всего произведено", opA, "операций", opA-opS, "покупок валюты и", opS, "продаж")
 	fmt.Println("На балансе", amount, cursOfToday.Valute[a-1].CharCode, "на сумму ", sum)
 	fmt.Println("Средний курс: ", sum/amount)
+
+	returnMenu(ret)
+}
+
+// CursArchive : запрос курса за прошедщие дни
+func CursArchive(ret bool) {
+	/*
+		Эта функция берет данные из банковского xml-файла формирует переменную rateOld типа ValCurs
+		Записывает эти данные в файл ValCurs.bin
+		Но я не имею ни малейшего понятия, как это работает
+	*/
+	var (
+		ab, bc, cd string
+	)
+	ab = "https://www.cbr-xml-daily.ru/daily_utf8.xml"
+	bc = "?date_req="
+
+	fmt.Println("Введите дату в формате ДД/ММ/ГГГГ:")
+	fmt.Scanln(&cd)
+	fmt.Println(ab + bc + cd)
+
+	fmt.Println("Запрос...", ab+bc+cd)
+	responce, err := http.Get(ab + bc + cd)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer responce.Body.Close()
+
+	byteValue, err := ioutil.ReadAll(responce.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	file, err := os.Create("D:/_development/_projects/DollarBill/ValCursArchive.bin") // создание файла
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	file.Write(byteValue)
+
+	err = xml.Unmarshal(byteValue, &rateOld)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Данные получены и записаны в файл", file.Name())
+	fmt.Println(rateOld)
 
 	returnMenu(ret)
 }
