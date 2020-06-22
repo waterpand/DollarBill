@@ -373,7 +373,7 @@ func mainMenu() {
 }
 
 func techMenu() {
-	fmt.Printf(" // Техническое меню:\n1 -- \n2 -- Прочитать информацию из файла и записать в структуру cursOfToday\n3 -- Фильтр по текущей валюте \n4 -- \n5 -- \n8 -- Возврвт в основное меню - mainMenu\n9 -- Выход в func main()\n0 -- Выход из программы\n")
+	fmt.Printf(" // Техническое меню:\n1 -- \n2 -- Прочитать информацию из файла и записать в структуру cursOfToday\n3 -- Фильтр по текущей валюте \n4 -- \n5 -- Баланс\n8 -- Возврвт в основное меню - mainMenu\n9 -- Выход в func main()\n0 -- Выход из программы\n")
 	fmt.Scanln(&b)
 
 	switch b {
@@ -388,7 +388,7 @@ func techMenu() {
 	case 4:
 
 	case 5:
-
+		Balans()
 	case 8:
 		mainMenu()
 	case 9:
@@ -578,6 +578,39 @@ func FilterOp() {
 		}
 	}
 
+}
+
+// Balans : суммирует все операции по конкретной валюте
+func Balans() {
+	sum := 0.0
+	amount := 0.0
+	//cursAverage := 0.0
+	k := 1.0
+	opA := 0
+	opS := 0
+	fmt.Println()
+	fmt.Println("Баланс для текущей валюты: ", cursOfToday.Valute[a-1].CharCode, "--", cursOfToday.Valute[a-1].Name)
+	fmt.Println()
+
+	for i := range op.Transaction {
+		if op.Transaction[i].CharCode == cursOfToday.Valute[a-1].CharCode {
+			opA++
+			if op.Transaction[i].Operation != true {
+				k = -1.0
+				opS++
+			}
+
+			sum = sum + (op.Transaction[i].Quantity*op.Transaction[i].Price)*k
+			amount = amount + op.Transaction[i].Quantity*k
+		}
+	}
+
+	fmt.Println("Итого:")
+	fmt.Println("Всего произведено", opA, "операций", opA-opS, "покупок валюты и", opS, "продаж")
+	fmt.Println("На балансе", amount, cursOfToday.Valute[a-1].CharCode, "на сумму ", sum)
+	fmt.Println("Средний курс: ", sum/amount)
+
+	mainMenu()
 }
 
 func main() {
