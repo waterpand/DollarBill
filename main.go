@@ -28,8 +28,8 @@ var (
 	cursOfToday                                                                                Curs
 	op                                                                                         Order
 	f                                                                                          []byte
-	b, e                                                                                       int = 10, 10
-	a, i, c, d                                                                                 int
+	a, b, e                                                                                    int = 11, 10, 10
+	i, c, d                                                                                    int
 	dateOfPurchase, rateValuteNow                                                              string
 	rateOfPurchase, amountOfСurrency, sumOfPurchase, todayCurrency, rateOfToday, percentOfRate float64
 	temp                                                                                       Transact
@@ -323,11 +323,11 @@ func readTheFile() {
 }
 
 func mainMenu() {
-	T := time.Date(2020, time.June, 21, 8, 5, 2, 0, time.Local)
+	T := time.Now()
 	fmt.Println()
 	fmt.Printf(T.Format("_2.1.2006"))
 	fmt.Print(" // ", cursOfToday.Valute[a-1].CharCode, " -- ", cursOfToday.Valute[a-1].Value)
-	fmt.Printf(" // Меню:\n1 -- Вычитать данные из xml, записать в файл ValCurs.bin и записать данные в структуру cursOfToday\n2 -- Вывести список доступных валют\n3 -- Сменить валюту\n4 -- Произвести рассчет\n5 -- Прочитать из файла историю операций\n6 -- Показать историю операций\n7 -- Записать историю операций в файл\n8 -- Техническое меню\n9 -- func main() \n0 -- Выход из программы\n")
+	fmt.Printf(" // Меню:\n1 -- Вычитать данные из xml, записать в файл ValCurs.bin и записать данные в структуру cursOfToday\n2 -- Вывести список доступных валют\n3 -- Сменить валюту\n4 -- Произвести операцию с текущей валютой\n5 -- Прочитать из файла историю операций\n6 -- Показать историю операций\n7 -- Записать историю операций в файл\n8 -- Техническое меню\n9 -- func main() \n0 -- Выход из программы\n")
 	fmt.Scanln(&b)
 
 	switch b {
@@ -453,7 +453,7 @@ func SafeOperation(ChC, D string, Opp, Fl bool, Pr, Q float64) {
 		-- либо копать в сторону карт, чтобы для каждой валюты операции записывались отдельно
 		-- (пока выбран этот вариант) либо внести обозначение валюты внутрь структуры, чтобы каждую операцию можно было идентифицировать по валюте
 	*/
-	T := time.Date(2020, time.June, 21, 8, 5, 2, 0, time.Local)
+	T := time.Now()
 
 	fmt.Println("Запись в структуру op (type Order):")
 	fmt.Println("Название валюты", ChC)
@@ -570,14 +570,13 @@ func FilterOp() {
 }
 
 func main() {
-	a = 11
 	readTheFile()
 	ValCursToCurs2()
 	readTheFile2()
 	defer mainMenu()
 
 	fmt.Println("func main")
-	T := time.Date(2020, time.June, 21, 8, 5, 2, 0, time.Local)
+	T := time.Now()
 	fmt.Println(T.Format("_2.1.2006"))
 	fmt.Println(cursOfToday)
 }
