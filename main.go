@@ -81,7 +81,8 @@ type Transact struct { // все параметры операции
 }
 
 // ValCursToCurs : данная функция записывает данные полученные из xml в структуру CursOfToday
-func ValCursToCurs() {
+func ValCursToCurs(ret bool) {
+	fmt.Println(rate.Date)
 	fmt.Print("Запись полученных данных в структуру cursOfToday")
 	cursOfToday.Date = rate.Date
 	for i := 0; i < 34; i++ {
@@ -90,11 +91,11 @@ func ValCursToCurs() {
 		cursOfToday.Valute[i].Value = stringToFloat(stringConvert(rate.Valute[i].Value))
 	}
 	fmt.Println("...complete")
-	mainMenu()
+	returnMenu(ret)
 }
 
 // ValCursToCurs2 : данная функция записывает данные полученные из файла ValCurs.bin в структуру CursOfToday
-func ValCursToCurs2() {
+func ValCursToCurs2(print, ret bool) { // print(true) - печатать структуру, ret(true) - возврат в основное меню
 	fmt.Println()
 	fmt.Print("Запись полученных данных в структуру cursOfToday")
 	cursOfToday.Date = offlineRate.Date
@@ -104,7 +105,10 @@ func ValCursToCurs2() {
 		cursOfToday.Valute[i].Value = stringToFloat(stringConvert(offlineRate.Valute[i].Value))
 	}
 	fmt.Println("...complete")
-	//mainMenu()
+	if print == true {
+		fmt.Println(cursOfToday)
+	}
+	returnMenu(ret)
 }
 
 /*
@@ -174,7 +178,7 @@ func currencySelection3() { //список доступных валют в 4 с
 */
 
 //список доступных валют в 7 столбцов
-func currencySelection4() {
+func currencySelection4(ret bool) {
 	fmt.Println()
 	fmt.Println(offlineRate.Date, " Доступные валюты:")
 	for j := 0; j < 5; j++ {
@@ -197,7 +201,7 @@ func currencySelection4() {
 
 	}
 
-	mainMenu()
+	returnMenu(ret)
 }
 
 /*
@@ -211,7 +215,7 @@ func ratePrint(i int) { // Курс конкретной валюты
 */
 
 // ratePrint2 : Запрос номера валюты и вывод на печать курса
-func ratePrint2() {
+func ratePrint2(ret bool) {
 	/*
 		Вывод на печать курса валюты в формате: USD -- 69,5725 -- Американский доллар.
 	*/
@@ -225,7 +229,7 @@ func ratePrint2() {
 		}
 	}
 	fmt.Println("	 ", cursOfToday.Valute[a-1].CharCode, "--", cursOfToday.Valute[a-1].Value, "--", cursOfToday.Valute[a-1].Name)
-	mainMenu()
+	returnMenu(ret)
 }
 
 // stringConvert : меняет запятую на точку в данных, которые подтягиваются по xml, что их удобно было конвертировать в float64
@@ -323,34 +327,35 @@ func readTheFile() {
 
 }
 
+// returnMenu : определяет будет ли возврат в основное меню или нет
+func returnMenu(ret bool) {
+	if ret == true {
+		mainMenu()
+	}
+}
+
 func mainMenu() {
 	T := time.Now()
 	fmt.Println()
 	fmt.Printf(T.Format("_2.1.2006"))
 	fmt.Print(" // ", cursOfToday.Valute[a-1].CharCode, " -- ", cursOfToday.Valute[a-1].Value)
-	fmt.Printf(" // Меню:\n1 -- \n2 -- \n3 -- \n4 -- Произвести операцию с текущей валютой\n5 -- Баланс\n6 -- Показать историю операций\n7 -- \n8 -- Техническое меню\n9 -- func main() \n0 -- Выход из программы\n")
+	fmt.Printf(" // Меню:\n1 -- Баланс\n2 -- Купить\n3 -- Продать\n4 -- Показать историю операций\n5 -- \n6 -- \n7 -- \n8 -- Техническое меню\n9 -- func main() \n0 -- Выход из программы\n")
 	fmt.Scanln(&b)
 
 	switch b {
 	case 1:
-
+		DelFromStruct(false, true, false)
+		Balans(true)
 	case 2:
-
+		rateCalculation(true, true)
 	case 3:
-
+		rateCalculation(false, true)
 	case 4:
-		fmt.Println("Купить - 1 || Продать - 2")
-		fmt.Scanln(&c)
-		if c == 1 {
-			buy = true
-		} else {
-			buy = false
-		}
-		rateCalculation(buy)
+		DelFromStruct(false, true, true)
 	case 5:
-		Balans()
+
 	case 6:
-		DelFromStruct(false)
+
 	case 7:
 
 	case 8:
@@ -358,12 +363,11 @@ func mainMenu() {
 	case 9:
 		fmt.Println("Выход из меню")
 	case 0:
-		WriteTheFile(op)
+		WriteTheFile(op, false)
 		fmt.Println("Выход")
 		os.Exit(0)
 	case 11:
-		DelFromStruct(true)
-		mainMenu()
+		DelFromStruct(true, false, true)
 
 	default:
 		fmt.Println("Введено неверное значение")
@@ -379,48 +383,40 @@ func techMenu() {
 	switch b {
 	case 1:
 		httpGet2()
-		ValCursToCurs()
+		ValCursToCurs(true)
 	case 2:
 		readTheFile()
-		ValCursToCurs2()
+		ValCursToCurs2(true, true)
 	case 3:
-		FilterOp()
-		mainMenu()
+		FilterOp(true)
 	case 4:
-		currencySelection4()
+		currencySelection4(true)
 	case 5:
-		ratePrint2()
+		ratePrint2(true)
 	case 6:
-		readTheFile2()
+		readTheFile2(true)
 	case 7:
-		WriteTheFile(op)
-		mainMenu()
+		WriteTheFile(op, true)
 	case 8:
 		mainMenu()
 	case 9:
 		fmt.Println("Выход из меню")
 	case 0:
-		WriteTheFile(op)
+		WriteTheFile(op, false)
 		fmt.Println("Выход")
 		os.Exit(0)
-
 	default:
 		fmt.Println("Введено неверное значение")
 		techMenu()
 	}
 }
 
-func rateCalculation(buy bool) { // расчет по выбранной валюте
+func rateCalculation(buy, ret bool) { // расчет по выбранной валюте
 	/*
 		Добавить учет разряда валют, например, если курс установлен за 10 крон...
 	*/
 
 	fmt.Println("Валюта для расчета:", cursOfToday.Valute[a-1].CharCode, "  ", cursOfToday.Valute[a-1].Name)
-	fmt.Print("Расчитать для текущей валюты - 1\n              Сменить валюту - 2 ")
-	fmt.Scanln(&c)
-	if c != 1 {
-		mainMenu()
-	}
 
 	fmt.Println("Введите дату операции в формате ДД.ММ.ГГГГ:")
 	fmt.Scanln(&dateOfPurchase)
@@ -448,17 +444,12 @@ func rateCalculation(buy bool) { // расчет по выбранной вал�
 	fmt.Println("Текущий результат: \n", percentOfRate, "%\n", todayCurrency-sumOfPurchase, "руб.\n", offlineRate.Valute[a-1].Name, amountOfСurrency, "шт.")
 	fmt.Println("----------------------------------------------------------------")
 
-	fmt.Println("Запомнить результат? для сохранения - 1, для сброса - любое число")
-	fmt.Scanln(&d)
-	if c == 1 {
-		SafeOperation(cursOfToday.Valute[a-1].CharCode, dateOfPurchase, buy, true, rateOfPurchase, amountOfСurrency)
-	}
+	SafeOperation(cursOfToday.Valute[a-1].CharCode, dateOfPurchase, buy, true, rateOfPurchase, amountOfСurrency, ret)
 
-	mainMenu()
 }
 
 // SafeOperation : сохранение операции по покупке валюты / запись в структуру Order
-func SafeOperation(ChC, D string, Opp, Fl bool, Pr, Q float64) {
+func SafeOperation(ChC, D string, Opp, Fl bool, Pr, Q float64, ret bool) {
 
 	/*
 		Если произвести несколько операций с одной валютой, а потом заменить валюту и произвести еще одну операцию, то все опвалюта всех операций изменится
@@ -467,15 +458,6 @@ func SafeOperation(ChC, D string, Opp, Fl bool, Pr, Q float64) {
 		-- (пока выбран этот вариант) либо внести обозначение валюты внутрь структуры, чтобы каждую операцию можно было идентифицировать по валюте
 	*/
 	T := time.Now()
-
-	fmt.Println("Запись в структуру op (type Order):")
-	fmt.Println("Название валюты", ChC)
-	fmt.Println("Покупка или продажа (true - покупка)", Opp)
-	fmt.Println("цена покупки (курс)", Pr)
-	fmt.Println("Дата покупки", D)
-	fmt.Println("Количество валюты", Q)
-	fmt.Println("Учет операции (true - учитывать)", Fl)
-	fmt.Println()
 
 	op.Fresh = T.Format("_2.1.2006")
 
@@ -487,20 +469,12 @@ func SafeOperation(ChC, D string, Opp, Fl bool, Pr, Q float64) {
 	temp.Flag = Fl
 	op.Transaction = append(op.Transaction, temp)
 
-	fmt.Println("Все операции:", op)
-	fmt.Println()
-	fmt.Println("Текущая операция:", temp)
-
-	fmt.Println("1 - Записать в файл\n2 - выйти в меню")
-	fmt.Scanln(&e)
-	if e == 1 {
-		WriteTheFile(op)
-	}
-	mainMenu()
+	WriteTheFile(op, false)
+	returnMenu(ret)
 }
 
 // readTheFile2 : Чтение из файла ValCurs.bin
-func readTheFile2() {
+func readTheFile2(ret bool) {
 	file, err := os.Open("D:/_development/_projects/DollarBill/OperationDamp.json")
 	if err != nil {
 		fmt.Println(err)
@@ -517,13 +491,11 @@ func readTheFile2() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(op)
-
-	mainMenu()
+	returnMenu(ret)
 }
 
 // WriteTheFile : данная функция записывает в файл данные из структуры с записями всех операций
-func WriteTheFile(op Order) {
+func WriteTheFile(op Order, ret bool) {
 
 	byteValue, err := json.Marshal(op)
 	if err != nil {
@@ -539,22 +511,36 @@ func WriteTheFile(op Order) {
 
 	fmt.Println("Данные записаны в файл", file.Name())
 
+	returnMenu(ret)
 }
 
 // DelFromStruct : вывод списка операций или удаления записей об операциях из структуры
-func DelFromStruct(k bool) {
-	fmt.Printf("\nСписок операций:\n")
-
-	for i := range op.Transaction {
-		if op.Transaction[i].Operation == true {
-			fmt.Print(i+1, ")  ", op.Transaction[i].Date, " - Покупка ")
-		} else {
-			fmt.Print(i+1, ")  ", op.Transaction[i].Date, " - Продажа ")
-		}
-		fmt.Println(op.Transaction[i].Quantity, "", op.Transaction[i].CharCode, " по курсу ", op.Transaction[i].Price)
+func DelFromStruct(del, usd, ret bool) {
+	if usd == true && op.Transaction[i].CharCode == cursOfToday.Valute[a-1].CharCode {
+		fmt.Printf("\nСписок операций по текущей валюте:\n")
+	} else {
+		fmt.Printf("\nСписок операций:\n")
 	}
 
-	if k == true {
+	for i := range op.Transaction {
+		if usd == true && op.Transaction[i].CharCode == cursOfToday.Valute[a-1].CharCode {
+			if op.Transaction[i].Operation == true {
+				fmt.Print(i+1, ")  ", op.Transaction[i].Date, " - Покупка ")
+			} else {
+				fmt.Print(i+1, ")  ", op.Transaction[i].Date, " - Продажа ")
+			}
+			fmt.Println(op.Transaction[i].Quantity, "", op.Transaction[i].CharCode, " по курсу ", op.Transaction[i].Price)
+		} else if usd == false {
+			if op.Transaction[i].Operation == true {
+				fmt.Print(i+1, ")  ", op.Transaction[i].Date, " - Покупка ")
+			} else {
+				fmt.Print(i+1, ")  ", op.Transaction[i].Date, " - Продажа ")
+			}
+			fmt.Println(op.Transaction[i].Quantity, "", op.Transaction[i].CharCode, " по курсу ", op.Transaction[i].Price)
+		}
+	}
+
+	if del == true {
 		j := 100
 		fmt.Println("Выбрать номер удаляемой транзакции")
 		fmt.Scanln(&j)
@@ -567,27 +553,25 @@ func DelFromStruct(k bool) {
 		}
 	}
 
-	mainMenu()
+	returnMenu(ret)
 }
 
 // FilterOp : фильтр для валют
-func FilterOp() {
+func FilterOp(ret bool) {
 	fmt.Println()
 	fmt.Println("Показаны только операции с текущей валютой: ", cursOfToday.Valute[a-1].CharCode, "--", cursOfToday.Valute[a-1].Name)
 	fmt.Println()
-
-	//tiker := cursOfToday.Valute[a-1].CharCode
 
 	for i, _ := range op.Transaction {
 		if op.Transaction[i].CharCode == cursOfToday.Valute[a-1].CharCode {
 			fmt.Println(i+1, op.Transaction[i])
 		}
 	}
-
+	returnMenu(ret)
 }
 
 // Balans : суммирует все операции по конкретной валюте
-func Balans() {
+func Balans(ret bool) {
 	sum := 0.0
 	amount := 0.0
 	//cursAverage := 0.0
@@ -616,16 +600,17 @@ func Balans() {
 	fmt.Println("На балансе", amount, cursOfToday.Valute[a-1].CharCode, "на сумму ", sum)
 	fmt.Println("Средний курс: ", sum/amount)
 
-	mainMenu()
+	returnMenu(ret)
 }
 
 func main() {
 	readTheFile()
-	ValCursToCurs2()
-	readTheFile2()
+	ValCursToCurs2(false, false)
+	readTheFile2(true)
 	defer mainMenu()
 
 	fmt.Println("func main")
 	T := time.Now()
 	fmt.Println(T.Format("_2.1.2006"))
+
 }
