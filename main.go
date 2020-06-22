@@ -328,17 +328,16 @@ func mainMenu() {
 	fmt.Println()
 	fmt.Printf(T.Format("_2.1.2006"))
 	fmt.Print(" // ", cursOfToday.Valute[a-1].CharCode, " -- ", cursOfToday.Valute[a-1].Value)
-	fmt.Printf(" // Меню:\n1 -- Вычитать данные из xml, записать в файл ValCurs.bin и записать данные в структуру cursOfToday\n2 -- Вывести список доступных валют\n3 -- Сменить валюту\n4 -- Произвести операцию с текущей валютой\n5 -- Прочитать из файла историю операций\n6 -- Показать историю операций\n7 -- Записать историю операций в файл\n8 -- Техническое меню\n9 -- func main() \n0 -- Выход из программы\n")
+	fmt.Printf(" // Меню:\n1 -- \n2 -- \n3 -- \n4 -- Произвести операцию с текущей валютой\n5 -- Баланс\n6 -- Показать историю операций\n7 -- \n8 -- Техническое меню\n9 -- func main() \n0 -- Выход из программы\n")
 	fmt.Scanln(&b)
 
 	switch b {
 	case 1:
-		httpGet2()
-		ValCursToCurs()
+
 	case 2:
-		currencySelection4()
+
 	case 3:
-		ratePrint2()
+
 	case 4:
 		fmt.Println("Купить - 1 || Продать - 2")
 		fmt.Scanln(&c)
@@ -349,16 +348,17 @@ func mainMenu() {
 		}
 		rateCalculation(buy)
 	case 5:
-		readTheFile2()
+		Balans()
 	case 6:
 		DelFromStruct(false)
 	case 7:
-		WriteTheFile(op)
+
 	case 8:
 		techMenu()
 	case 9:
 		fmt.Println("Выход из меню")
 	case 0:
+		WriteTheFile(op)
 		fmt.Println("Выход")
 		os.Exit(0)
 	case 11:
@@ -373,12 +373,13 @@ func mainMenu() {
 }
 
 func techMenu() {
-	fmt.Printf(" // Техническое меню:\n1 -- \n2 -- Прочитать информацию из файла и записать в структуру cursOfToday\n3 -- Фильтр по текущей валюте \n4 -- \n5 -- Баланс\n8 -- Возврвт в основное меню - mainMenu\n9 -- Выход в func main()\n0 -- Выход из программы\n")
+	fmt.Printf(" // Техническое меню:\n1 -- Вычитать данные из xml, записать в файл ValCurs.bin и записать данные в структуру cursOfToday\n2 -- Прочитать информацию из файла и записать в структуру cursOfToday\n3 -- Фильтр по текущей валюте \n4 -- Вывести список доступных валют \n5 -- Сменить валюту\n6 -- Прочитать из файла историю операций\n7 -- Записать историю операций в файл\n8 -- Возврвт в основное меню - mainMenu\n9 -- Выход в func main()\n0 -- Выход из программы\n")
 	fmt.Scanln(&b)
 
 	switch b {
 	case 1:
-
+		httpGet2()
+		ValCursToCurs()
 	case 2:
 		readTheFile()
 		ValCursToCurs2()
@@ -386,14 +387,20 @@ func techMenu() {
 		FilterOp()
 		mainMenu()
 	case 4:
-
+		currencySelection4()
 	case 5:
-		Balans()
+		ratePrint2()
+	case 6:
+		readTheFile2()
+	case 7:
+		WriteTheFile(op)
+		mainMenu()
 	case 8:
 		mainMenu()
 	case 9:
 		fmt.Println("Выход из меню")
 	case 0:
+		WriteTheFile(op)
 		fmt.Println("Выход")
 		os.Exit(0)
 
@@ -531,7 +538,6 @@ func WriteTheFile(op Order) {
 	file.Write(byteValue) //  cannot use op (type Order) as type []byte in argument to file.Write
 
 	fmt.Println("Данные записаны в файл", file.Name())
-	mainMenu()
 
 }
 
@@ -622,5 +628,4 @@ func main() {
 	fmt.Println("func main")
 	T := time.Now()
 	fmt.Println(T.Format("_2.1.2006"))
-	fmt.Println(cursOfToday)
 }
