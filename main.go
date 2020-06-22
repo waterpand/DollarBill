@@ -33,6 +33,7 @@ var (
 	dateOfPurchase, rateValuteNow                                                              string
 	rateOfPurchase, amountOfСurrency, sumOfPurchase, todayCurrency, rateOfToday, percentOfRate float64
 	temp                                                                                       Transact
+	buy                                                                                        bool
 )
 
 // ValCurs : сгененрирована автоматически на сайте https://www.onlinetool.io/xmltogo/ по ссылке ЦБ (https://www.cbr-xml-daily.ru/daily_utf8.xml)
@@ -339,7 +340,14 @@ func mainMenu() {
 	case 3:
 		ratePrint2()
 	case 4:
-		rateCalculation()
+		fmt.Println("Купить - 1 || Продать - 2")
+		fmt.Scanln(&c)
+		if c == 1 {
+			buy = true
+		} else {
+			buy = false
+		}
+		rateCalculation(buy)
 	case 5:
 		readTheFile2()
 	case 6:
@@ -395,13 +403,11 @@ func techMenu() {
 	}
 }
 
-func rateCalculation() { // расчет по выбранной валюте
+func rateCalculation(buy bool) { // расчет по выбранной валюте
 	/*
 		Добавить учет разряда валют, например, если курс установлен за 10 крон...
 	*/
-	//if cursOfToday.Valute[a-1].Value == 0 {
-	//fmt.Println("Необходимо записать данные в структуру // пункт 2 основного меню")
-	//}
+
 	fmt.Println("Валюта для расчета:", cursOfToday.Valute[a-1].CharCode, "  ", cursOfToday.Valute[a-1].Name)
 	fmt.Print("Расчитать для текущей валюты - 1\n              Сменить валюту - 2 ")
 	fmt.Scanln(&c)
@@ -409,23 +415,23 @@ func rateCalculation() { // расчет по выбранной валюте
 		mainMenu()
 	}
 
-	fmt.Println("Введите дату покупки в формате ДД.ММ.ГГГГ:")
+	fmt.Println("Введите дату операции в формате ДД.ММ.ГГГГ:")
 	fmt.Scanln(&dateOfPurchase)
 
 	rateOfToday = cursOfToday.Valute[a-1].Value
 
 	if dateOfPurchase != cursOfToday.Date {
-		fmt.Println("Введите курс покупки (формат $$.$$$$):")
+		fmt.Println("Введите курс валюты (формат $$.$$$$):")
 		fmt.Scanln(&rateOfPurchase)
 	} else {
 		rateOfPurchase = rateOfToday
 	}
 
-	fmt.Println("Введите количество купленной валюты:")
+	fmt.Println("Введите количество валюты:")
 	fmt.Scanln(&amountOfСurrency)
 
 	sumOfPurchase = rateOfPurchase * amountOfСurrency // Сумма покупки
-	fmt.Println("Сумма покупки:", sumOfPurchase)
+	fmt.Println("Сумма операции:", sumOfPurchase)
 
 	todayCurrency = amountOfСurrency * rateOfToday // Стоимость по текущему курсу
 	fmt.Println("Стоимость по текущему курсу:", todayCurrency)
@@ -438,7 +444,7 @@ func rateCalculation() { // расчет по выбранной валюте
 	fmt.Println("Запомнить результат? для сохранения - 1, для сброса - любое число")
 	fmt.Scanln(&d)
 	if c == 1 {
-		SafeOperation(cursOfToday.Valute[a-1].CharCode, dateOfPurchase, true, true, rateOfPurchase, amountOfСurrency)
+		SafeOperation(cursOfToday.Valute[a-1].CharCode, dateOfPurchase, buy, true, rateOfPurchase, amountOfСurrency)
 	}
 
 	mainMenu()
@@ -533,8 +539,13 @@ func WriteTheFile(op Order) {
 func DelFromStruct(k bool) {
 	fmt.Printf("\nСписок операций:\n")
 
-	for i, _ := range op.Transaction {
-		fmt.Println(i+1, op.Transaction[i])
+	for i := range op.Transaction {
+		if op.Transaction[i].Operation == true {
+			fmt.Print(i+1, ")  ", op.Transaction[i].Date, " - Покупка ")
+		} else {
+			fmt.Print(i+1, ")  ", op.Transaction[i].Date, " - Продажа ")
+		}
+		fmt.Println(op.Transaction[i].Quantity, "", op.Transaction[i].CharCode, " по курсу ", op.Transaction[i].Price)
 	}
 
 	if k == true {
@@ -545,7 +556,7 @@ func DelFromStruct(k bool) {
 
 		op.Transaction = append(op.Transaction[:j], op.Transaction[j+1:]...)
 
-		for i, _ := range op.Transaction {
+		for i := range op.Transaction {
 			fmt.Println(i+1, op.Transaction[i])
 		}
 	}
