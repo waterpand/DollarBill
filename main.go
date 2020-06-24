@@ -10,6 +10,7 @@ package main
 - сохранение архивных курсов в срез и файл
 - При запросе текущего курса сохранять его в архивный файл
 - считывать архивный файл при запуске приложения
+- добавить в функцию конвертации string другие форматы записи числа 01/01/2020 01.01.2020 01,01,2020 01:01:2020
 */
 
 import (
@@ -57,7 +58,7 @@ type ValCurs struct {
 	} `xml:"Valute"`
 }
 
-// Curs создана для получения только используемых данных из банковского xml
+// Curs : получение только используемых данных из банковского xml
 type Curs struct {
 	Date   string
 	Valute [34]struct {
@@ -133,77 +134,12 @@ func ValCursToCurs3(ret bool) {
 	fmt.Println("...complete")
 	fmt.Println(cursOfOldDay)
 
+	fmt.Println("Добавление данных в срез archiveCurses")
 	archiveCurses = append(archiveCurses, cursOfOldDay)
 	fmt.Println(archiveCurses)
 
-	returnMenu(ret)
+	WriteFileValCursArchive(archiveCurses, ret) //когда заработает - сделать return archiveCurses и далее его в функцию Write File....
 }
-
-/*
-func currencySelection() (a int) { //список доступных валют
-	/*
-		Вывод на экран списка всех доступных валют
-	*
-
-	fmt.Println("Доступные валюты:")
-	for j := 0; j < 34; j++ {
-		fmt.Println(j+1, "--", rate.Valute[j].CharCode, "--", rate.Valute[j].Name)
-	}
-
-	fmt.Println("введите номер валюты:")
-	for i := 0; i < 1; {
-		fmt.Scanln(&a)
-		if a < 1 || a > 34 {
-			fmt.Println("Неверное число, попробуйте ещё раз:")
-		} else {
-			i = 1
-		}
-	}
-	mainMenu()
-	return a - 1
-}
-*/
-
-/*
-func currencySelection2() { //список доступных валют без запроса кода
-	/*
-		Вывод на экран списка всех доступных валют
-	*
-
-	fmt.Println("Доступные валюты:")
-	for j := 0; j < 34; j++ {
-		fmt.Println(j+1, "--", rate.Valute[j].CharCode, "--", rate.Valute[j].Name)
-	}
-
-	mainMenu()
-}
-*/
-
-/*
-func currencySelection3() { //список доступных валют в 4 столбца
-	/*
-		Вывод на экран списка всех доступных валют в четыре столбца
-		Увеличить количество столбцов до 6 или 7 чтобы было удобно читать
-	*
-	fmt.Println()
-	fmt.Println(offlineRate.Date, " Доступные валюты:")
-	for j := 0; j < 10; j++ {
-		if j < 4 {
-			fmt.Print(j+1, " -- ", cursOfToday.Valute[j].CharCode, "			")
-			fmt.Print(j+11, " -- ", cursOfToday.Valute[j+10].CharCode, "			")
-			fmt.Print(j+21, " -- ", cursOfToday.Valute[j+20].CharCode, "			")
-			fmt.Println(j+31, "--", cursOfToday.Valute[j+30].CharCode, "			")
-		} else {
-			fmt.Print(j+1, " -- ", cursOfToday.Valute[j].CharCode, "			")
-			fmt.Print(j+11, " -- ", cursOfToday.Valute[j+10].CharCode, "			")
-			fmt.Println(j+21, "--", cursOfToday.Valute[j+20].CharCode, "			")
-		}
-
-	}
-
-	mainMenu()
-}
-*/
 
 //список доступных валют в 7 столбцов
 func currencySelection4(ret bool) {
@@ -231,16 +167,6 @@ func currencySelection4(ret bool) {
 
 	returnMenu(ret)
 }
-
-/*
-func ratePrint(i int) { // Курс конкретной валюты
-	/*
-		Вывод на печать курса валюты в формате: USD -- 69,5725 -- Американский доллар.
-		Переписать, чтобы читалось из структуры
-	*
-	fmt.Println("	  ", rate.Valute[i].CharCode, "--", rate.Valute[i].Value, "--", rate.Valute[i].Name)
-}
-*/
 
 // ratePrint2 : Запрос номера валюты и вывод на печать курса
 func ratePrint2(ret bool) {
@@ -274,33 +200,6 @@ func stringToFloat(in string) float64 {
 	return out
 }
 
-/*
-func httpGet() ValCurs { // вычитка из xml
-	/*
-		Эта функция берет данные из банковского xml-файла формирует переменную rate типа ValCurs
-		Но я не имею ни малейшего понятия, как это работает
-	*
-	fmt.Println("Запрос...https://www.cbr-xml-daily.ru/daily_utf8.xml")
-	responce, err := http.Get("https://www.cbr-xml-daily.ru/daily_utf8.xml")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer responce.Body.Close()
-
-	byteValue, err := ioutil.ReadAll(responce.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = xml.Unmarshal(byteValue, &rate)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Данные получены")
-	mainMenu()
-	return rate
-}
-*/
 // вычитка из xml и запись в файл
 func httpGet2() ValCurs {
 	/*
@@ -437,7 +336,9 @@ func techMenu() {
 		CursArchive(false)
 		ValCursToCurs3(true)
 	case 12:
-		fmt.Println(archiveCurses)
+		PrintArchiveCurses(true)
+		//fmt.Println(archiveCurses)
+		//returnMenu(true)
 	default:
 		fmt.Println("Введено неверное значение")
 		techMenu()
@@ -527,6 +428,27 @@ func readTheFile2(ret bool) {
 	returnMenu(ret)
 }
 
+// readTheFile3 : Чтение из файла ValCursArchive.bin
+func readTheFile3(ret bool) {
+	file, err := os.Open("D:/_development/_projects/DollarBill/ValCursArchive.json")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer file.Close()
+
+	data, err := ioutil.ReadFile("D:/_development/_projects/DollarBill/ValCursArchive.json")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = json.Unmarshal(data, &archiveCurses)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	returnMenu(ret)
+}
+
 // WriteTheFile : данная функция записывает в файл данные из структуры с записями всех операций
 func WriteTheFile(op Order, ret bool) {
 
@@ -540,7 +462,27 @@ func WriteTheFile(op Order, ret bool) {
 		log.Fatal(err)
 	}
 	defer file.Close()
-	file.Write(byteValue) //  cannot use op (type Order) as type []byte in argument to file.Write
+	file.Write(byteValue)
+
+	fmt.Println("Данные записаны в файл", file.Name())
+
+	returnMenu(ret)
+}
+
+// WriteFileValCursArchive : записывает в файл ValCursArchive.json данные из среза ArchiveCurses
+func WriteFileValCursArchive(ac []Curs, ret bool) {
+
+	byteValue, err := json.Marshal(ac)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	file, err := os.Create("D:/_development/_projects/DollarBill/ValCursArchive.json") // создание файла
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	file.Write(byteValue)
 
 	fmt.Println("Данные записаны в файл", file.Name())
 
@@ -637,7 +579,7 @@ func Balans(ret bool) {
 }
 
 // CursArchive : запрос курса за прошедщие дни
-func CursArchive(ret bool) {
+func CursArchive(ret bool) { //добавить функцию конвертации string в нужный формат числа
 	/*
 		Эта функция берет данные из банковского xml-файла формирует переменную rateOld типа ValCurs
 		Записывает эти данные в файл ValCurs.bin
@@ -665,19 +607,35 @@ func CursArchive(ret bool) {
 		log.Fatal(err)
 	}
 
-	file, err := os.Create("D:/_development/_projects/DollarBill/ValCursArchive.bin") // создание файла
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-	file.Write(byteValue)
+	/*
+
+		file, err := os.Create("D:/_development/_projects/DollarBill/ValCursArchive.bin") // создание файла
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer file.Close()
+		file.Write(byteValue)
+
+	*/
 
 	err = xml.Unmarshal(byteValue, &rateOld)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Данные получены и записаны в файл", file.Name())
+	//fmt.Println("Данные получены и записаны в файл", file.Name())
+	fmt.Println("Данные получены и записаны в rateOld")
 	fmt.Println(rateOld)
+
+	returnMenu(ret)
+}
+
+// PrintarchiveCurses : Выводит в удобном виде срез archiveCurses
+func PrintArchiveCurses(ret bool) {
+
+	for i := range archiveCurses {
+		fmt.Println(archiveCurses[i].Date)
+		fmt.Println(archiveCurses[i].Valute)
+	}
 
 	returnMenu(ret)
 }
@@ -685,7 +643,8 @@ func CursArchive(ret bool) {
 func main() {
 	readTheFile()
 	ValCursToCurs2(false, false)
-	readTheFile2(true)
+	readTheFile2(false)
+	readTheFile3(true)
 	defer mainMenu()
 
 	fmt.Println("func main")
