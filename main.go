@@ -29,9 +29,9 @@ import (
 
 var (
 	rate, rateOld, offlineRate                                                                 ValCurs
-	cursOfToday, cursOfOldDay                                                                  Curs
+	cursOfToday, cursOfOldDay                                                                  Curs2
 	op                                                                                         Order
-	archiveCurses                                                                              []Curs
+	archiveCurses                                                                              []Curs2
 	f                                                                                          []byte
 	a, b, e                                                                                    int = 11, 10, 10
 	i, c, d                                                                                    int
@@ -68,6 +68,18 @@ type Curs struct {
 	}
 }
 
+// Curs2 : получение только используемых данных из банковского xml
+type Curs2 struct {
+	DD     int
+	MM     int
+	YYYY   int
+	Valute [34]struct {
+		Name     string
+		CharCode string
+		Value    float64
+	}
+}
+
 // Order : структура для записи проведенных операция покупки/продажи валюты
 type Order struct {
 	Fresh       string
@@ -89,7 +101,11 @@ type Transact struct { // все параметры операции
 func ValCursToCurs(ret bool) {
 	fmt.Println(rate.Date)
 	fmt.Print("Запись полученных данных в структуру cursOfToday")
-	cursOfToday.Date = rate.Date
+	//cursOfToday.Date = rate.Date
+	DD, MM, YYYY := stringDateToInt(rate.Date)
+	cursOfToday.YYYY = YYYY
+	cursOfToday.MM = MM
+	cursOfToday.DD = DD
 	for i := 0; i < 34; i++ {
 		cursOfToday.Valute[i].Name = rate.Valute[i].Name
 		cursOfToday.Valute[i].CharCode = rate.Valute[i].CharCode
@@ -103,7 +119,11 @@ func ValCursToCurs(ret bool) {
 func ValCursToCurs2(print, ret bool) { // print(true) - печатать структуру, ret(true) - возврат в основное меню
 	fmt.Println()
 	fmt.Print("Запись полученных данных в структуру cursOfToday")
-	cursOfToday.Date = offlineRate.Date
+	//cursOfToday.Date = offlineRate.Date
+	DD, MM, YYYY := stringDateToInt(offlineRate.Date)
+	cursOfToday.YYYY = YYYY
+	cursOfToday.MM = MM
+	cursOfToday.DD = DD
 	for i := 0; i < 34; i++ {
 		cursOfToday.Valute[i].Name = offlineRate.Valute[i].Name
 		cursOfToday.Valute[i].CharCode = offlineRate.Valute[i].CharCode
@@ -124,7 +144,12 @@ func ValCursToCurs3(ret bool) {
 
 	fmt.Println(rateOld.Date)
 	fmt.Print("Запись полученных данных в структуру cursOfOldDay")
-	cursOfOldDay.Date = rateOld.Date
+	//cursOfOldDay.Date = rateOld.Date
+	DD, MM, YYYY := stringDateToInt(rateOld.Date)
+	cursOfOldDay.YYYY = YYYY
+	cursOfOldDay.MM = MM
+	cursOfOldDay.DD = DD
+
 	for i := 0; i < 34; i++ {
 		cursOfOldDay.Valute[i].Name = rateOld.Valute[i].Name
 		cursOfOldDay.Valute[i].CharCode = rateOld.Valute[i].CharCode
@@ -132,6 +157,7 @@ func ValCursToCurs3(ret bool) {
 
 	}
 	fmt.Println("...complete")
+
 	fmt.Println(cursOfOldDay)
 
 	fmt.Println("Добавление данных в срез archiveCurses")
@@ -198,6 +224,26 @@ func stringToFloat(in string) float64 {
 
 	out, _ := strconv.ParseFloat(in, 8)
 	return out
+}
+
+// stringDateToInt : конвертирует string дату в три int
+func stringDateToInt(date string) (int, int, int) {
+
+	dd, err := strconv.Atoi(date[:2])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	mm, err := strconv.Atoi(date[3:5])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	yyyy, err := strconv.Atoi(date[6:])
+	if err != nil {
+		log.Fatal(err)
+	}
+	return dd, mm, yyyy
 }
 
 // вычитка из xml и запись в файл
@@ -304,7 +350,7 @@ func mainMenu() {
 }
 
 func techMenu() {
-	fmt.Printf(" // Техническое меню:\n1 -- Вычитать данные из xml, записать в файл ValCurs.bin и записать данные в структуру cursOfToday\n2 -- Прочитать информацию из файла и записать в структуру cursOfToday\n3 -- Фильтр по текущей валюте \n4 -- Вывести список доступных валют \n5 -- Сменить валюту\n6 -- Прочитать из файла историю операций\n7 -- Записать историю операций в файл\n8 -- Возврвт в основное меню - mainMenu\n9 -- Выход в func main()\n11 -- Запрос архивного курса\n12 -- Печать archiveCurses\n0 -- Выход из программы\n")
+	fmt.Printf(" // Техническое меню:\n1 -- Вычитать данные из xml, записать в файл ValCurs.bin и записать данные в структуру cursOfToday\n2 -- Прочитать информацию из файла и записать в структуру cursOfToday\n3 -- Фильтр по текущей валюте \n4 -- Вывести список доступных валют \n5 -- Сменить валюту\n6 -- Прочитать из файла историю операций\n7 -- Записать историю операций в файл\n8 -- Возврвт в основное меню - mainMenu\n9 -- Выход в func main()\n11 -- Запрос архивного курса\n12 -- Печать archiveCurses\n13 -- Преобразование даты\n0 -- Выход из программы\n")
 	fmt.Scanln(&b)
 
 	switch b {
@@ -339,6 +385,9 @@ func techMenu() {
 		PrintArchiveCurses(true)
 		//fmt.Println(archiveCurses)
 		//returnMenu(true)
+	case 13:
+		stringDateToInt(rate.Date)
+		returnMenu(true)
 	default:
 		fmt.Println("Введено неверное значение")
 		techMenu()
@@ -355,9 +404,11 @@ func rateCalculation(buy, ret bool) { // расчет по выбранной в
 	fmt.Println("Введите дату операции в формате ДД.ММ.ГГГГ:")
 	fmt.Scanln(&dateOfPurchase)
 
+	Dd, Mm, YYyy := stringDateToInt(dateOfPurchase)
+
 	rateOfToday = cursOfToday.Valute[a-1].Value
 
-	if dateOfPurchase != cursOfToday.Date {
+	if Dd != cursOfToday.DD && Mm != cursOfToday.MM && YYyy != cursOfToday.YYYY {
 		fmt.Println("Введите курс валюты (формат $$.$$$$):")
 		fmt.Scanln(&rateOfPurchase)
 	} else {
@@ -470,7 +521,7 @@ func WriteTheFile(op Order, ret bool) {
 }
 
 // WriteFileValCursArchive : записывает в файл ValCursArchive.json данные из среза ArchiveCurses
-func WriteFileValCursArchive(ac []Curs, ret bool) {
+func WriteFileValCursArchive(ac []Curs2, ret bool) {
 
 	byteValue, err := json.Marshal(ac)
 	if err != nil {
@@ -607,34 +658,30 @@ func CursArchive(ret bool) { //добавить функцию конверта�
 		log.Fatal(err)
 	}
 
-	/*
-
-		file, err := os.Create("D:/_development/_projects/DollarBill/ValCursArchive.bin") // создание файла
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer file.Close()
-		file.Write(byteValue)
-
-	*/
-
 	err = xml.Unmarshal(byteValue, &rateOld)
 	if err != nil {
 		log.Fatal(err)
 	}
-	//fmt.Println("Данные получены и записаны в файл", file.Name())
+
 	fmt.Println("Данные получены и записаны в rateOld")
 	fmt.Println(rateOld)
 
 	returnMenu(ret)
 }
 
-// PrintarchiveCurses : Выводит в удобном виде срез archiveCurses
+// PrintArchiveCurses : Выводит в удобном виде срез archiveCurses
 func PrintArchiveCurses(ret bool) {
 
 	for i := range archiveCurses {
-		fmt.Println(archiveCurses[i].Date)
-		fmt.Println(archiveCurses[i].Valute)
+		fmt.Print(archiveCurses[i].DD, ".", archiveCurses[i].MM, ".", archiveCurses[i].YYYY, "\n")
+		fmt.Println(archiveCurses[i].Valute[:4])
+		fmt.Println(archiveCurses[i].Valute[4:9])
+		fmt.Println(archiveCurses[i].Valute[9:15])
+		fmt.Println(archiveCurses[i].Valute[15:21])
+		fmt.Println(archiveCurses[i].Valute[21:26])
+		fmt.Println(archiveCurses[i].Valute[26:31])
+		fmt.Println(archiveCurses[i].Valute[31:34])
+		fmt.Println()
 	}
 
 	returnMenu(ret)
