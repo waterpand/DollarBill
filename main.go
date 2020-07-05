@@ -2,12 +2,12 @@ package main
 
 /* Желаемый функционал приложения:
 - парсинг курса доллара (позже других валют - евро и швейцарского франка) - complete
-- запись значений курса за произвольный промежуток времени -- для этого нужно создать отдельную структуру, которая будет содержать данные по дням и будет записываться в файл
-- запись данных о покупкх и продажах с сохранением
+- запись значений курса за произвольный промежуток времени -- для этого нужно создать отдельную структуру, которая будет содержать данные по дням и будет записываться в файл - complete
+- запись данных о покупкх и продажах с сохранением - complete
 - фиксация даты покупки валюты и прибыльность к текущему курсу - complete
 - расчет прибыли для гипотетической покупки - complete
-- бумажная доходность к текущему курсу
-- сохранение архивных курсов в срез и файл
+- бумажная доходность к текущему курсу - complete
+- сохранение архивных курсов в срез и файл - complete
 - При запросе текущего курса сохранять его в архивный файл
 - считывать архивный файл при запуске приложения
 - добавить в функцию конвертации string другие форматы записи числа 01/01/2020 01.01.2020 01,01,2020 01:01:2020
@@ -350,7 +350,7 @@ func mainMenu() {
 }
 
 func techMenu() {
-	fmt.Printf(" // Техническое меню:\n1 -- Вычитать данные из xml, записать в файл ValCurs.bin и записать данные в структуру cursOfToday\n2 -- Прочитать информацию из файла и записать в структуру cursOfToday\n3 -- Фильтр по текущей валюте \n4 -- Вывести список доступных валют \n5 -- Сменить валюту\n6 -- Прочитать из файла историю операций\n7 -- Записать историю операций в файл\n8 -- Возврвт в основное меню - mainMenu\n9 -- Выход в func main()\n11 -- Запрос архивного курса\n12 -- Печать archiveCurses\n13 -- Преобразование даты\n0 -- Выход из программы\n")
+	fmt.Printf(" // Техническое меню:\n1 -- Вычитать данные из xml, записать в файл ValCurs.bin и записать данные в структуру cursOfToday\n2 -- Прочитать информацию из файла и записать в структуру cursOfToday\n3 -- Фильтр по текущей валюте \n4 -- Вывести список доступных валют \n5 -- Сменить валюту\n6 -- Прочитать из файла историю операций\n7 -- Записать историю операций в файл\n8 -- Возврвт в основное меню - mainMenu\n9 -- Выход в func main()\n11 -- Запрос архивного курса\n12 -- Печать archiveCurses\n13 -- Преобразование даты\n14 -- Сортировка архива\n0 -- Выход из программы\n")
 	fmt.Scanln(&b)
 
 	switch b {
@@ -388,6 +388,10 @@ func techMenu() {
 	case 13:
 		stringDateToInt(rate.Date)
 		returnMenu(true)
+	case 14:
+		archiveCurses = SortArchive2(archiveCurses, true) // После применения  функции archiveCurses в структуру CursArchive почему-то записывалось одно значение даты для всех элементов
+		returnMenu(true)
+
 	default:
 		fmt.Println("Введено неверное значение")
 		techMenu()
@@ -685,6 +689,156 @@ func PrintArchiveCurses(ret bool) {
 	}
 
 	returnMenu(ret)
+}
+
+// SortArchive : сортирует срез с архивными курсами по дате
+func SortArchive(C []Curs2, ret bool) []Curs2 {
+	T := time.Now()
+	minY, err := strconv.Atoi(T.Format("2006"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	minY++
+	fmt.Println(minY)
+
+	for i := range C {
+		if C[i].YYYY < minY {
+			minY = C[i].YYYY
+		}
+	}
+
+	minM := 13
+	for i := range C {
+		if C[i].YYYY == minY && C[i].MM < minM {
+			minM = C[i].MM
+		}
+	}
+
+	minD := 32
+	ii := 0
+	for i := range C {
+		if C[i].YYYY == minY && C[i].MM == minM && C[i].DD < minD {
+			minD = C[i].DD
+			ii = i
+		}
+	}
+
+	fmt.Println(C[ii])
+	C2 := []Curs2{}
+	C2 = append(C2, C[ii])
+
+	for i := range C {
+		for i := range C {
+			if C[i].YYYY == minY {
+				for i := range C {
+					minD = 0
+					if C[i].MM == minM {
+						for i := range C {
+
+							if C[i].DD == minD {
+								C2 = append(C2, C[i])
+							}
+						}
+						minD++
+
+					}
+				}
+				minM++
+			}
+		}
+		minY++
+		i++
+	}
+
+	for i := range C2 {
+		fmt.Print(C2[i].DD, ".", C2[i].MM, ".", C2[i].YYYY, "\n")
+		fmt.Println(C2[i].Valute[:4])
+		fmt.Println(C2[i].Valute[4:9])
+		fmt.Println(C2[i].Valute[9:15])
+		fmt.Println(C2[i].Valute[15:21])
+		fmt.Println(C2[i].Valute[21:26])
+		fmt.Println(C2[i].Valute[26:31])
+		fmt.Println(C2[i].Valute[31:34])
+		fmt.Println()
+	}
+
+	return C2
+}
+
+// SortArchive2 : Сортировка архива для структуры из песочницы
+func SortArchive2(ac1 []Curs2, ret bool) []Curs2 {
+
+	var (
+		ac2, ac3, ac4                []Curs2
+		archiveY, archiveM, archiveD int
+	)
+
+	for range ac1 {
+		archiveY := 3000
+		imin := 1000
+		for i := range ac1 {
+			if ac1[i].YYYY < archiveY {
+				archiveY = ac1[i].YYYY
+				imin = i
+			}
+		}
+
+		ac2 = append(ac2, ac1[imin])
+		ac1 = append(ac1[:imin], ac1[imin+1:]...)
+	}
+
+	for range ac2 {
+		archiveY = ac2[0].YYYY
+		archiveM := 13
+		imin := 1000
+		for i := range ac2 {
+			if ac2[i].YYYY == archiveY && ac2[i].MM < archiveM {
+				archiveM = ac2[i].MM
+				imin = i
+			}
+		}
+
+		ac3 = append(ac3, ac2[imin])
+		ac2 = append(ac2[:imin], ac2[imin+1:]...)
+	}
+
+	for range ac3 {
+		archiveY = ac3[0].YYYY
+		archiveM = ac3[0].MM
+		archiveD = 32
+		imin := 1000
+		for i := range ac3 {
+			if ac3[i].YYYY == archiveY && ac3[i].MM == archiveM && ac3[i].DD < archiveD {
+				archiveD = ac3[i].DD
+				imin = i
+			}
+		}
+
+		ac4 = append(ac4, ac3[imin])
+		ac3 = append(ac3[:imin], ac3[imin+1:]...)
+	}
+
+	for i := 0; i < len(ac4)-1; i++ {
+		if ac4[i].YYYY == ac4[i+1].YYYY && ac4[i].MM == ac4[i+1].MM && ac4[i].DD == ac4[i+1].DD {
+			ac4 = append(ac4[:i], ac4[i+1:]...)
+			i = 0
+		}
+	}
+
+	for i := range ac4 {
+		fmt.Println()
+		fmt.Print(ac4[i].DD, ".", ac4[i].MM, ".", ac4[i].YYYY, "\n")
+		fmt.Println(ac4[i].Valute[:4])
+		fmt.Println(ac4[i].Valute[4:9])
+		fmt.Println(ac4[i].Valute[9:15])
+		fmt.Println(ac4[i].Valute[15:21])
+		fmt.Println(ac4[i].Valute[21:26])
+		fmt.Println(ac4[i].Valute[26:31])
+		fmt.Println(ac4[i].Valute[31:34])
+		fmt.Println()
+	}
+
+	return ac4
 }
 
 func main() {
