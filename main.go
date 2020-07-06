@@ -33,7 +33,7 @@ var (
 	op                                                                                         Order
 	archiveCurses                                                                              []Curs2
 	f                                                                                          []byte
-	a, b, e                                                                                    int = 11, 10, 10
+	a, b, e                                                                                    int = 3, 10, 10
 	i, c, d                                                                                    int
 	dateOfPurchase, rateValuteNow                                                              string
 	rateOfPurchase, amountOfСurrency, sumOfPurchase, todayCurrency, rateOfToday, percentOfRate float64
@@ -73,7 +73,7 @@ type Curs2 struct {
 	DD     int
 	MM     int
 	YYYY   int
-	Valute [34]struct {
+	Valute [12]struct {
 		Name     string
 		CharCode string
 		Value    float64
@@ -106,10 +106,14 @@ func ValCursToCurs(ret bool) {
 	cursOfToday.YYYY = YYYY
 	cursOfToday.MM = MM
 	cursOfToday.DD = DD
+	k := 0
 	for i := 0; i < 34; i++ {
-		cursOfToday.Valute[i].Name = rate.Valute[i].Name
-		cursOfToday.Valute[i].CharCode = rate.Valute[i].CharCode
-		cursOfToday.Valute[i].Value = stringToFloat(stringConvert(rate.Valute[i].Value))
+		if i == 2 || i == 8 || i == 10 || i == 11 || i == 12 || i == 16 || i == 18 || i == 24 || i == 28 || i == 29 || i == 30 || i == 33 {
+			cursOfToday.Valute[k].Name = rate.Valute[i].Name
+			cursOfToday.Valute[k].CharCode = rate.Valute[i].CharCode
+			cursOfToday.Valute[k].Value = stringToFloat(stringConvert(rate.Valute[i].Value))
+			k++
+		}
 	}
 	fmt.Println("...complete")
 	returnMenu(ret)
@@ -124,10 +128,14 @@ func ValCursToCurs2(print, ret bool) { // print(true) - печатать стр�
 	cursOfToday.YYYY = YYYY
 	cursOfToday.MM = MM
 	cursOfToday.DD = DD
+	k := 0
 	for i := 0; i < 34; i++ {
-		cursOfToday.Valute[i].Name = offlineRate.Valute[i].Name
-		cursOfToday.Valute[i].CharCode = offlineRate.Valute[i].CharCode
-		cursOfToday.Valute[i].Value = stringToFloat(stringConvert(offlineRate.Valute[i].Value))
+		if i == 2 || i == 8 || i == 10 || i == 11 || i == 12 || i == 16 || i == 18 || i == 24 || i == 28 || i == 29 || i == 30 || i == 33 {
+			cursOfToday.Valute[k].Name = offlineRate.Valute[i].Name
+			cursOfToday.Valute[k].CharCode = offlineRate.Valute[i].CharCode
+			cursOfToday.Valute[k].Value = stringToFloat(stringConvert(offlineRate.Valute[i].Value))
+			k++
+		}
 	}
 	fmt.Println("...complete")
 	if print == true {
@@ -136,7 +144,7 @@ func ValCursToCurs2(print, ret bool) { // print(true) - печатать стр�
 	returnMenu(ret)
 }
 
-// ValCursToCurs3 : данная функция записывает данные полученные из фрхивного xml в структуру cursOfOldDay для последующей записи в []Curs
+// ValCursToCurs3 : данная функция записывает данные полученные из фрхивного xml в структуру cursOfOldDay (при этом берется только 12 валют из 34) для последующей записи в []Curs
 func ValCursToCurs3(ret bool) {
 	/*
 	   Далее: записывать archiveCurses в файл, а перед append считывать файл и циклом проверять, нет ли там уже этих чисел (или не перед добавлением в срез, а сразу после запроса, чтобы лишний раз не парсить...)
@@ -144,16 +152,18 @@ func ValCursToCurs3(ret bool) {
 
 	fmt.Println(rateOld.Date)
 	fmt.Print("Запись полученных данных в структуру cursOfOldDay")
-	//cursOfOldDay.Date = rateOld.Date
 	DD, MM, YYYY := stringDateToInt(rateOld.Date)
 	cursOfOldDay.YYYY = YYYY
 	cursOfOldDay.MM = MM
 	cursOfOldDay.DD = DD
-
+	k := 0
 	for i := 0; i < 34; i++ {
-		cursOfOldDay.Valute[i].Name = rateOld.Valute[i].Name
-		cursOfOldDay.Valute[i].CharCode = rateOld.Valute[i].CharCode
-		cursOfOldDay.Valute[i].Value = stringToFloat(stringConvert(rateOld.Valute[i].Value))
+		if i == 2 || i == 8 || i == 10 || i == 11 || i == 12 || i == 16 || i == 18 || i == 24 || i == 28 || i == 29 || i == 30 || i == 33 {
+			cursOfOldDay.Valute[k].Name = rateOld.Valute[i].Name
+			cursOfOldDay.Valute[k].CharCode = rateOld.Valute[i].CharCode
+			cursOfOldDay.Valute[k].Value = stringToFloat(stringConvert(rateOld.Valute[i].Value))
+			k++
+		}
 
 	}
 	fmt.Println("...complete")
@@ -171,23 +181,12 @@ func ValCursToCurs3(ret bool) {
 func currencySelection4(ret bool) {
 	fmt.Println()
 	fmt.Println(offlineRate.Date, " Доступные валюты:")
-	for j := 0; j < 5; j++ {
-		if j < 4 {
-			fmt.Print(j+1, "  -- ", cursOfToday.Valute[j].CharCode, "		")
-			fmt.Print(j+6, "  -- ", cursOfToday.Valute[j+5].CharCode, "		")
-			fmt.Print(j+11, " -- ", cursOfToday.Valute[j+10].CharCode, "		")
-			fmt.Print(j+16, " -- ", cursOfToday.Valute[j+15].CharCode, "		")
-			fmt.Print(j+21, " -- ", cursOfToday.Valute[j+20].CharCode, "		")
-			fmt.Print(j+26, " -- ", cursOfToday.Valute[j+25].CharCode, "		")
-			fmt.Println(j+31, "--", cursOfToday.Valute[j+30].CharCode, "		")
-		} else {
-			fmt.Print(j+1, "  -- ", cursOfToday.Valute[j].CharCode, "		")
-			fmt.Print(j+6, " -- ", cursOfToday.Valute[j+5].CharCode, "		")
-			fmt.Print(j+11, " -- ", cursOfToday.Valute[j+10].CharCode, "		")
-			fmt.Print(j+16, " -- ", cursOfToday.Valute[j+15].CharCode, "		")
-			fmt.Print(j+21, " -- ", cursOfToday.Valute[j+20].CharCode, "		")
-			fmt.Println(j+26, "--", cursOfToday.Valute[j+25].CharCode, "		")
-		}
+	fmt.Println(cursOfToday)
+	for j := 0; j < 4; j++ {
+
+		fmt.Print(j+1, "  -- ", cursOfToday.Valute[j].CharCode, "		")
+		fmt.Print(j+5, "  -- ", cursOfToday.Valute[j+4].CharCode, "		")
+		fmt.Println(j+9, " -- ", cursOfToday.Valute[j+8].CharCode, "		")
 
 	}
 
@@ -202,7 +201,7 @@ func ratePrint2(ret bool) {
 	fmt.Println("Введите номер валюты:")
 	for i := 0; i < 1; {
 		fmt.Scanln(&a)
-		if a < 1 || a > 34 {
+		if a < 1 || a > 12 {
 			fmt.Println("Неверное число, попробуйте ещё раз:")
 		} else {
 			i = 1
@@ -592,7 +591,7 @@ func FilterOp(ret bool) {
 	fmt.Println("Показаны только операции с текущей валютой: ", cursOfToday.Valute[a-1].CharCode, "--", cursOfToday.Valute[a-1].Name)
 	fmt.Println()
 
-	for i, _ := range op.Transaction {
+	for i := range op.Transaction {
 		if op.Transaction[i].CharCode == cursOfToday.Valute[a-1].CharCode {
 			fmt.Println(i+1, op.Transaction[i])
 		}
@@ -604,7 +603,6 @@ func FilterOp(ret bool) {
 func Balans(ret bool) {
 	sum := 0.0
 	amount := 0.0
-	//cursAverage := 0.0
 	k := 1.0
 	opA := 0
 	opS := 0
@@ -678,91 +676,14 @@ func PrintArchiveCurses(ret bool) {
 
 	for i := range archiveCurses {
 		fmt.Print(archiveCurses[i].DD, ".", archiveCurses[i].MM, ".", archiveCurses[i].YYYY, "\n")
-		fmt.Println(archiveCurses[i].Valute[:4])
-		fmt.Println(archiveCurses[i].Valute[4:9])
-		fmt.Println(archiveCurses[i].Valute[9:15])
-		fmt.Println(archiveCurses[i].Valute[15:21])
-		fmt.Println(archiveCurses[i].Valute[21:26])
-		fmt.Println(archiveCurses[i].Valute[26:31])
-		fmt.Println(archiveCurses[i].Valute[31:34])
+		fmt.Println(archiveCurses[i].Valute[:3])
+		fmt.Println(archiveCurses[i].Valute[3:6])
+		fmt.Println(archiveCurses[i].Valute[6:9])
+		fmt.Println(archiveCurses[i].Valute[9:12])
 		fmt.Println()
 	}
 
 	returnMenu(ret)
-}
-
-// SortArchive : сортирует срез с архивными курсами по дате
-func SortArchive(C []Curs2, ret bool) []Curs2 {
-	T := time.Now()
-	minY, err := strconv.Atoi(T.Format("2006"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	minY++
-	fmt.Println(minY)
-
-	for i := range C {
-		if C[i].YYYY < minY {
-			minY = C[i].YYYY
-		}
-	}
-
-	minM := 13
-	for i := range C {
-		if C[i].YYYY == minY && C[i].MM < minM {
-			minM = C[i].MM
-		}
-	}
-
-	minD := 32
-	ii := 0
-	for i := range C {
-		if C[i].YYYY == minY && C[i].MM == minM && C[i].DD < minD {
-			minD = C[i].DD
-			ii = i
-		}
-	}
-
-	fmt.Println(C[ii])
-	C2 := []Curs2{}
-	C2 = append(C2, C[ii])
-
-	for i := range C {
-		for i := range C {
-			if C[i].YYYY == minY {
-				for i := range C {
-					minD = 0
-					if C[i].MM == minM {
-						for i := range C {
-
-							if C[i].DD == minD {
-								C2 = append(C2, C[i])
-							}
-						}
-						minD++
-
-					}
-				}
-				minM++
-			}
-		}
-		minY++
-		i++
-	}
-
-	for i := range C2 {
-		fmt.Print(C2[i].DD, ".", C2[i].MM, ".", C2[i].YYYY, "\n")
-		fmt.Println(C2[i].Valute[:4])
-		fmt.Println(C2[i].Valute[4:9])
-		fmt.Println(C2[i].Valute[9:15])
-		fmt.Println(C2[i].Valute[15:21])
-		fmt.Println(C2[i].Valute[21:26])
-		fmt.Println(C2[i].Valute[26:31])
-		fmt.Println(C2[i].Valute[31:34])
-		fmt.Println()
-	}
-
-	return C2
 }
 
 // SortArchive2 : Сортировка архива для структуры из песочницы
@@ -829,12 +750,8 @@ func SortArchive2(ac1 []Curs2, ret bool) []Curs2 {
 		fmt.Println()
 		fmt.Print(ac4[i].DD, ".", ac4[i].MM, ".", ac4[i].YYYY, "\n")
 		fmt.Println(ac4[i].Valute[:4])
-		fmt.Println(ac4[i].Valute[4:9])
-		fmt.Println(ac4[i].Valute[9:15])
-		fmt.Println(ac4[i].Valute[15:21])
-		fmt.Println(ac4[i].Valute[21:26])
-		fmt.Println(ac4[i].Valute[26:31])
-		fmt.Println(ac4[i].Valute[31:34])
+		fmt.Println(ac4[i].Valute[4:8])
+		fmt.Println(ac4[i].Valute[8:12])
 		fmt.Println()
 	}
 
@@ -844,8 +761,8 @@ func SortArchive2(ac1 []Curs2, ret bool) []Curs2 {
 func main() {
 	readTheFile()
 	ValCursToCurs2(false, false)
-	readTheFile2(false)
-	readTheFile3(true)
+	//readTheFile2(false)
+	//readTheFile3(true)
 	defer mainMenu()
 
 	fmt.Println("func main")
