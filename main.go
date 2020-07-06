@@ -2,10 +2,15 @@ package main
 
 /* Желаемый функционал приложения:
 - парсинг курса доллара (позже других валют - евро и швейцарского франка) - complete
-- запись значений курса за произвольный промежуток времени -- для этого нужно создать отдельную структуру, которая будет содержать данные по дням и будет записываться в файл
-- запись данных о покупкх и продажах с сохранением
+- запись значений курса за произвольный промежуток времени -- для этого нужно создать отдельную структуру, которая будет содержать данные по дням и будет записываться в файл - complete
+- запись данных о покупкх и продажах с сохранением - complete
 - фиксация даты покупки валюты и прибыльность к текущему курсу - complete
 - расчет прибыли для гипотетической покупки - complete
+- бумажная доходность к текущему курсу - complete
+- сохранение архивных курсов в срез и файл - complete
+- При запросе текущего курса сохранять его в архивный файл
+- считывать архивный файл при запуске приложения
+- добавить в функцию конвертации string другие форматы записи числа 01/01/2020 01.01.2020 01,01,2020 01:01:2020
 */
 
 import (
@@ -23,10 +28,10 @@ import (
 )
 
 var (
-	rate                                                                                       ValCurs
-	offlineRate                                                                                ValCurs
-	cursOfToday                                                                                Curs
+	rate, rateOld, offlineRate                                                                 ValCurs
+	cursOfToday, cursOfOldDay                                                                  Curs2
 	op                                                                                         Order
+	archiveCurses                                                                              []Curs2
 	f                                                                                          []byte
 	a, b, e                                                                                    int = 11, 10, 10
 	i, c, d                                                                                    int
@@ -53,9 +58,21 @@ type ValCurs struct {
 	} `xml:"Valute"`
 }
 
-// Curs создана для получения только используемых данных из банковского xml
+// Curs : получение только используемых данных из банковского xml
 type Curs struct {
 	Date   string
+	Valute [34]struct {
+		Name     string
+		CharCode string
+		Value    float64
+	}
+}
+
+// Curs2 : получение только используемых данных из банковского xml
+type Curs2 struct {
+	DD     int
+	MM     int
+	YYYY   int
 	Valute [34]struct {
 		Name     string
 		CharCode string
@@ -84,7 +101,11 @@ type Transact struct { // все параметры операции
 func ValCursToCurs(ret bool) {
 	fmt.Println(rate.Date)
 	fmt.Print("Запись полученных данных в структуру cursOfToday")
-	cursOfToday.Date = rate.Date
+	//cursOfToday.Date = rate.Date
+	DD, MM, YYYY := stringDateToInt(rate.Date)
+	cursOfToday.YYYY = YYYY
+	cursOfToday.MM = MM
+	cursOfToday.DD = DD
 	for i := 0; i < 34; i++ {
 		cursOfToday.Valute[i].Name = rate.Valute[i].Name
 		cursOfToday.Valute[i].CharCode = rate.Valute[i].CharCode
@@ -98,7 +119,11 @@ func ValCursToCurs(ret bool) {
 func ValCursToCurs2(print, ret bool) { // print(true) - печатать структуру, ret(true) - возврат в основное меню
 	fmt.Println()
 	fmt.Print("Запись полученных данных в структуру cursOfToday")
-	cursOfToday.Date = offlineRate.Date
+	//cursOfToday.Date = offlineRate.Date
+	DD, MM, YYYY := stringDateToInt(offlineRate.Date)
+	cursOfToday.YYYY = YYYY
+	cursOfToday.MM = MM
+	cursOfToday.DD = DD
 	for i := 0; i < 34; i++ {
 		cursOfToday.Valute[i].Name = offlineRate.Valute[i].Name
 		cursOfToday.Valute[i].CharCode = offlineRate.Valute[i].CharCode
@@ -111,71 +136,36 @@ func ValCursToCurs2(print, ret bool) { // print(true) - печатать стр�
 	returnMenu(ret)
 }
 
-/*
-func currencySelection() (a int) { //список доступных валют
+// ValCursToCurs3 : данная функция записывает данные полученные из фрхивного xml в структуру cursOfOldDay для последующей записи в []Curs
+func ValCursToCurs3(ret bool) {
 	/*
-		Вывод на экран списка всех доступных валют
-	*
+	   Далее: записывать archiveCurses в файл, а перед append считывать файл и циклом проверять, нет ли там уже этих чисел (или не перед добавлением в срез, а сразу после запроса, чтобы лишний раз не парсить...)
+	*/
 
-	fmt.Println("Доступные валюты:")
-	for j := 0; j < 34; j++ {
-		fmt.Println(j+1, "--", rate.Valute[j].CharCode, "--", rate.Valute[j].Name)
-	}
+	fmt.Println(rateOld.Date)
+	fmt.Print("Запись полученных данных в структуру cursOfOldDay")
+	//cursOfOldDay.Date = rateOld.Date
+	DD, MM, YYYY := stringDateToInt(rateOld.Date)
+	cursOfOldDay.YYYY = YYYY
+	cursOfOldDay.MM = MM
+	cursOfOldDay.DD = DD
 
-	fmt.Println("введите номер валюты:")
-	for i := 0; i < 1; {
-		fmt.Scanln(&a)
-		if a < 1 || a > 34 {
-			fmt.Println("Неверное число, попробуйте ещё раз:")
-		} else {
-			i = 1
-		}
+	for i := 0; i < 34; i++ {
+		cursOfOldDay.Valute[i].Name = rateOld.Valute[i].Name
+		cursOfOldDay.Valute[i].CharCode = rateOld.Valute[i].CharCode
+		cursOfOldDay.Valute[i].Value = stringToFloat(stringConvert(rateOld.Valute[i].Value))
+
 	}
-	mainMenu()
-	return a - 1
+	fmt.Println("...complete")
+
+	fmt.Println(cursOfOldDay)
+
+	fmt.Println("Добавление данных в срез archiveCurses")
+	archiveCurses = append(archiveCurses, cursOfOldDay)
+	fmt.Println(archiveCurses)
+
+	WriteFileValCursArchive(archiveCurses, ret) //когда заработает - сделать return archiveCurses и далее его в функцию Write File....
 }
-*/
-
-/*
-func currencySelection2() { //список доступных валют без запроса кода
-	/*
-		Вывод на экран списка всех доступных валют
-	*
-
-	fmt.Println("Доступные валюты:")
-	for j := 0; j < 34; j++ {
-		fmt.Println(j+1, "--", rate.Valute[j].CharCode, "--", rate.Valute[j].Name)
-	}
-
-	mainMenu()
-}
-*/
-
-/*
-func currencySelection3() { //список доступных валют в 4 столбца
-	/*
-		Вывод на экран списка всех доступных валют в четыре столбца
-		Увеличить количество столбцов до 6 или 7 чтобы было удобно читать
-	*
-	fmt.Println()
-	fmt.Println(offlineRate.Date, " Доступные валюты:")
-	for j := 0; j < 10; j++ {
-		if j < 4 {
-			fmt.Print(j+1, " -- ", cursOfToday.Valute[j].CharCode, "			")
-			fmt.Print(j+11, " -- ", cursOfToday.Valute[j+10].CharCode, "			")
-			fmt.Print(j+21, " -- ", cursOfToday.Valute[j+20].CharCode, "			")
-			fmt.Println(j+31, "--", cursOfToday.Valute[j+30].CharCode, "			")
-		} else {
-			fmt.Print(j+1, " -- ", cursOfToday.Valute[j].CharCode, "			")
-			fmt.Print(j+11, " -- ", cursOfToday.Valute[j+10].CharCode, "			")
-			fmt.Println(j+21, "--", cursOfToday.Valute[j+20].CharCode, "			")
-		}
-
-	}
-
-	mainMenu()
-}
-*/
 
 //список доступных валют в 7 столбцов
 func currencySelection4(ret bool) {
@@ -203,16 +193,6 @@ func currencySelection4(ret bool) {
 
 	returnMenu(ret)
 }
-
-/*
-func ratePrint(i int) { // Курс конкретной валюты
-	/*
-		Вывод на печать курса валюты в формате: USD -- 69,5725 -- Американский доллар.
-		Переписать, чтобы читалось из структуры
-	*
-	fmt.Println("	  ", rate.Valute[i].CharCode, "--", rate.Valute[i].Value, "--", rate.Valute[i].Name)
-}
-*/
 
 // ratePrint2 : Запрос номера валюты и вывод на печать курса
 func ratePrint2(ret bool) {
@@ -246,33 +226,26 @@ func stringToFloat(in string) float64 {
 	return out
 }
 
-/*
-func httpGet() ValCurs { // вычитка из xml
-	/*
-		Эта функция берет данные из банковского xml-файла формирует переменную rate типа ValCurs
-		Но я не имею ни малейшего понятия, как это работает
-	*
-	fmt.Println("Запрос...https://www.cbr-xml-daily.ru/daily_utf8.xml")
-	responce, err := http.Get("https://www.cbr-xml-daily.ru/daily_utf8.xml")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer responce.Body.Close()
+// stringDateToInt : конвертирует string дату в три int
+func stringDateToInt(date string) (int, int, int) {
 
-	byteValue, err := ioutil.ReadAll(responce.Body)
+	dd, err := strconv.Atoi(date[:2])
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = xml.Unmarshal(byteValue, &rate)
+	mm, err := strconv.Atoi(date[3:5])
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Данные получены")
-	mainMenu()
-	return rate
+
+	yyyy, err := strconv.Atoi(date[6:])
+	if err != nil {
+		log.Fatal(err)
+	}
+	return dd, mm, yyyy
 }
-*/
+
 // вычитка из xml и запись в файл
 func httpGet2() ValCurs {
 	/*
@@ -377,7 +350,7 @@ func mainMenu() {
 }
 
 func techMenu() {
-	fmt.Printf(" // Техническое меню:\n1 -- Вычитать данные из xml, записать в файл ValCurs.bin и записать данные в структуру cursOfToday\n2 -- Прочитать информацию из файла и записать в структуру cursOfToday\n3 -- Фильтр по текущей валюте \n4 -- Вывести список доступных валют \n5 -- Сменить валюту\n6 -- Прочитать из файла историю операций\n7 -- Записать историю операций в файл\n8 -- Возврвт в основное меню - mainMenu\n9 -- Выход в func main()\n0 -- Выход из программы\n")
+	fmt.Printf(" // Техническое меню:\n1 -- Вычитать данные из xml, записать в файл ValCurs.bin и записать данные в структуру cursOfToday\n2 -- Прочитать информацию из файла и записать в структуру cursOfToday\n3 -- Фильтр по текущей валюте \n4 -- Вывести список доступных валют \n5 -- Сменить валюту\n6 -- Прочитать из файла историю операций\n7 -- Записать историю операций в файл\n8 -- Возврвт в основное меню - mainMenu\n9 -- Выход в func main()\n11 -- Запрос архивного курса\n12 -- Печать archiveCurses\n13 -- Преобразование даты\n14 -- Сортировка архива\n0 -- Выход из программы\n")
 	fmt.Scanln(&b)
 
 	switch b {
@@ -405,6 +378,20 @@ func techMenu() {
 		WriteTheFile(op, false)
 		fmt.Println("Выход")
 		os.Exit(0)
+	case 11:
+		CursArchive(false)
+		ValCursToCurs3(true)
+	case 12:
+		PrintArchiveCurses(true)
+		//fmt.Println(archiveCurses)
+		//returnMenu(true)
+	case 13:
+		stringDateToInt(rate.Date)
+		returnMenu(true)
+	case 14:
+		archiveCurses = SortArchive2(archiveCurses, true) // После применения  функции archiveCurses в структуру CursArchive почему-то записывалось одно значение даты для всех элементов
+		returnMenu(true)
+
 	default:
 		fmt.Println("Введено неверное значение")
 		techMenu()
@@ -421,9 +408,11 @@ func rateCalculation(buy, ret bool) { // расчет по выбранной в
 	fmt.Println("Введите дату операции в формате ДД.ММ.ГГГГ:")
 	fmt.Scanln(&dateOfPurchase)
 
+	Dd, Mm, YYyy := stringDateToInt(dateOfPurchase)
+
 	rateOfToday = cursOfToday.Valute[a-1].Value
 
-	if dateOfPurchase != cursOfToday.Date {
+	if Dd != cursOfToday.DD && Mm != cursOfToday.MM && YYyy != cursOfToday.YYYY {
 		fmt.Println("Введите курс валюты (формат $$.$$$$):")
 		fmt.Scanln(&rateOfPurchase)
 	} else {
@@ -494,6 +483,27 @@ func readTheFile2(ret bool) {
 	returnMenu(ret)
 }
 
+// readTheFile3 : Чтение из файла ValCursArchive.bin
+func readTheFile3(ret bool) {
+	file, err := os.Open("D:/_development/_projects/DollarBill/ValCursArchive.json")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer file.Close()
+
+	data, err := ioutil.ReadFile("D:/_development/_projects/DollarBill/ValCursArchive.json")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = json.Unmarshal(data, &archiveCurses)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	returnMenu(ret)
+}
+
 // WriteTheFile : данная функция записывает в файл данные из структуры с записями всех операций
 func WriteTheFile(op Order, ret bool) {
 
@@ -507,7 +517,27 @@ func WriteTheFile(op Order, ret bool) {
 		log.Fatal(err)
 	}
 	defer file.Close()
-	file.Write(byteValue) //  cannot use op (type Order) as type []byte in argument to file.Write
+	file.Write(byteValue)
+
+	fmt.Println("Данные записаны в файл", file.Name())
+
+	returnMenu(ret)
+}
+
+// WriteFileValCursArchive : записывает в файл ValCursArchive.json данные из среза ArchiveCurses
+func WriteFileValCursArchive(ac []Curs2, ret bool) {
+
+	byteValue, err := json.Marshal(ac)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	file, err := os.Create("D:/_development/_projects/DollarBill/ValCursArchive.json") // создание файла
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	file.Write(byteValue)
 
 	fmt.Println("Данные записаны в файл", file.Name())
 
@@ -603,10 +633,219 @@ func Balans(ret bool) {
 	returnMenu(ret)
 }
 
+// CursArchive : запрос курса за прошедщие дни
+func CursArchive(ret bool) { //добавить функцию конвертации string в нужный формат числа
+	/*
+		Эта функция берет данные из банковского xml-файла формирует переменную rateOld типа ValCurs
+		Записывает эти данные в файл ValCurs.bin
+		Но я не имею ни малейшего понятия, как это работает
+	*/
+	var (
+		ab, bc, cd string
+	)
+	ab = "https://www.cbr-xml-daily.ru/daily_utf8.xml"
+	bc = "?date_req="
+
+	fmt.Println("Введите дату в формате ДД/ММ/ГГГГ:")
+	fmt.Scanln(&cd)
+	fmt.Println(ab + bc + cd)
+
+	fmt.Println("Запрос...", ab+bc+cd)
+	responce, err := http.Get(ab + bc + cd)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer responce.Body.Close()
+
+	byteValue, err := ioutil.ReadAll(responce.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = xml.Unmarshal(byteValue, &rateOld)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Данные получены и записаны в rateOld")
+	fmt.Println(rateOld)
+
+	returnMenu(ret)
+}
+
+// PrintArchiveCurses : Выводит в удобном виде срез archiveCurses
+func PrintArchiveCurses(ret bool) {
+
+	for i := range archiveCurses {
+		fmt.Print(archiveCurses[i].DD, ".", archiveCurses[i].MM, ".", archiveCurses[i].YYYY, "\n")
+		fmt.Println(archiveCurses[i].Valute[:4])
+		fmt.Println(archiveCurses[i].Valute[4:9])
+		fmt.Println(archiveCurses[i].Valute[9:15])
+		fmt.Println(archiveCurses[i].Valute[15:21])
+		fmt.Println(archiveCurses[i].Valute[21:26])
+		fmt.Println(archiveCurses[i].Valute[26:31])
+		fmt.Println(archiveCurses[i].Valute[31:34])
+		fmt.Println()
+	}
+
+	returnMenu(ret)
+}
+
+// SortArchive : сортирует срез с архивными курсами по дате
+func SortArchive(C []Curs2, ret bool) []Curs2 {
+	T := time.Now()
+	minY, err := strconv.Atoi(T.Format("2006"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	minY++
+	fmt.Println(minY)
+
+	for i := range C {
+		if C[i].YYYY < minY {
+			minY = C[i].YYYY
+		}
+	}
+
+	minM := 13
+	for i := range C {
+		if C[i].YYYY == minY && C[i].MM < minM {
+			minM = C[i].MM
+		}
+	}
+
+	minD := 32
+	ii := 0
+	for i := range C {
+		if C[i].YYYY == minY && C[i].MM == minM && C[i].DD < minD {
+			minD = C[i].DD
+			ii = i
+		}
+	}
+
+	fmt.Println(C[ii])
+	C2 := []Curs2{}
+	C2 = append(C2, C[ii])
+
+	for i := range C {
+		for i := range C {
+			if C[i].YYYY == minY {
+				for i := range C {
+					minD = 0
+					if C[i].MM == minM {
+						for i := range C {
+
+							if C[i].DD == minD {
+								C2 = append(C2, C[i])
+							}
+						}
+						minD++
+
+					}
+				}
+				minM++
+			}
+		}
+		minY++
+		i++
+	}
+
+	for i := range C2 {
+		fmt.Print(C2[i].DD, ".", C2[i].MM, ".", C2[i].YYYY, "\n")
+		fmt.Println(C2[i].Valute[:4])
+		fmt.Println(C2[i].Valute[4:9])
+		fmt.Println(C2[i].Valute[9:15])
+		fmt.Println(C2[i].Valute[15:21])
+		fmt.Println(C2[i].Valute[21:26])
+		fmt.Println(C2[i].Valute[26:31])
+		fmt.Println(C2[i].Valute[31:34])
+		fmt.Println()
+	}
+
+	return C2
+}
+
+// SortArchive2 : Сортировка архива для структуры из песочницы
+func SortArchive2(ac1 []Curs2, ret bool) []Curs2 {
+
+	var (
+		ac2, ac3, ac4                []Curs2
+		archiveY, archiveM, archiveD int
+	)
+
+	for range ac1 {
+		archiveY := 3000
+		imin := 1000
+		for i := range ac1 {
+			if ac1[i].YYYY < archiveY {
+				archiveY = ac1[i].YYYY
+				imin = i
+			}
+		}
+
+		ac2 = append(ac2, ac1[imin])
+		ac1 = append(ac1[:imin], ac1[imin+1:]...)
+	}
+
+	for range ac2 {
+		archiveY = ac2[0].YYYY
+		archiveM := 13
+		imin := 1000
+		for i := range ac2 {
+			if ac2[i].YYYY == archiveY && ac2[i].MM < archiveM {
+				archiveM = ac2[i].MM
+				imin = i
+			}
+		}
+
+		ac3 = append(ac3, ac2[imin])
+		ac2 = append(ac2[:imin], ac2[imin+1:]...)
+	}
+
+	for range ac3 {
+		archiveY = ac3[0].YYYY
+		archiveM = ac3[0].MM
+		archiveD = 32
+		imin := 1000
+		for i := range ac3 {
+			if ac3[i].YYYY == archiveY && ac3[i].MM == archiveM && ac3[i].DD < archiveD {
+				archiveD = ac3[i].DD
+				imin = i
+			}
+		}
+
+		ac4 = append(ac4, ac3[imin])
+		ac3 = append(ac3[:imin], ac3[imin+1:]...)
+	}
+
+	for i := 0; i < len(ac4)-1; i++ {
+		if ac4[i].YYYY == ac4[i+1].YYYY && ac4[i].MM == ac4[i+1].MM && ac4[i].DD == ac4[i+1].DD {
+			ac4 = append(ac4[:i], ac4[i+1:]...)
+			i = 0
+		}
+	}
+
+	for i := range ac4 {
+		fmt.Println()
+		fmt.Print(ac4[i].DD, ".", ac4[i].MM, ".", ac4[i].YYYY, "\n")
+		fmt.Println(ac4[i].Valute[:4])
+		fmt.Println(ac4[i].Valute[4:9])
+		fmt.Println(ac4[i].Valute[9:15])
+		fmt.Println(ac4[i].Valute[15:21])
+		fmt.Println(ac4[i].Valute[21:26])
+		fmt.Println(ac4[i].Valute[26:31])
+		fmt.Println(ac4[i].Valute[31:34])
+		fmt.Println()
+	}
+
+	return ac4
+}
+
 func main() {
 	readTheFile()
 	ValCursToCurs2(false, false)
-	readTheFile2(true)
+	readTheFile2(false)
+	readTheFile3(true)
 	defer mainMenu()
 
 	fmt.Println("func main")
