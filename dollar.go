@@ -264,7 +264,7 @@ func httpGet2() ValCurs {
 		log.Fatal(err)
 	}
 
-	file, err := os.Create("D:/_development/_projects/DollarBill/ValCurs.bin") // создание файла
+	file, err := os.Create("D:/_development/_projects/DollarBill/db/ValCurs.bin") // создание файла
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -281,13 +281,13 @@ func httpGet2() ValCurs {
 
 // readTheFile : Чтение из файла ValCurs.bin
 func readTheFile() {
-	file, err := os.Open("D:/_development/_projects/DollarBill/ValCurs.bin")
+	file, err := os.Open("D:/_development/_projects/DollarBill/db/ValCurs.bin")
 	if err != nil {
 		fmt.Println(err)
 	}
 	defer file.Close()
 
-	data, err := ioutil.ReadFile("D:/_development/_projects/DollarBill/ValCurs.bin")
+	data, err := ioutil.ReadFile("D:/_development/_projects/DollarBill/db/ValCurs.bin")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -463,13 +463,13 @@ func SafeOperation(ChC, D string, Opp, Fl bool, Pr, Q float64, ret bool) {
 
 // readTheFile2 : Чтение из файла ValCurs.bin
 func readTheFile2(ret bool) {
-	file, err := os.Open("D:/_development/_projects/DollarBill/OperationDamp.json")
+	file, err := os.Open("D:/_development/_projects/DollarBill/db/OperationDamp.json")
 	if err != nil {
 		fmt.Println(err)
 	}
 	defer file.Close()
 
-	data, err := ioutil.ReadFile("D:/_development/_projects/DollarBill/OperationDamp.json")
+	data, err := ioutil.ReadFile("D:/_development/_projects/DollarBill/db/OperationDamp.json")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -484,13 +484,13 @@ func readTheFile2(ret bool) {
 
 // readTheFile3 : Чтение из файла ValCursArchive.bin
 func readTheFile3(ret bool) {
-	file, err := os.Open("D:/_development/_projects/DollarBill/ValCursArchive.json")
+	file, err := os.Open("D:/_development/_projects/DollarBill/db/ValCursArchive.json")
 	if err != nil {
 		fmt.Println(err)
 	}
 	defer file.Close()
 
-	data, err := ioutil.ReadFile("D:/_development/_projects/DollarBill/ValCursArchive.json")
+	data, err := ioutil.ReadFile("D:/_development/_projects/DollarBill/db/ValCursArchive.json")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -511,7 +511,7 @@ func WriteTheFile(op Order, ret bool) {
 		log.Fatal(err)
 	}
 
-	file, err := os.Create("D:/_development/_projects/DollarBill/OperationDamp.json") // создание файла
+	file, err := os.Create("D:/_development/_projects/DollarBill/db/OperationDamp.json") // создание файла
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -531,7 +531,7 @@ func WriteFileValCursArchive(ac []Curs2, ret bool) {
 		log.Fatal(err)
 	}
 
-	file, err := os.Create("D:/_development/_projects/DollarBill/ValCursArchive.json") // создание файла
+	file, err := os.Create("D:/_development/_projects/DollarBill/db/ValCursArchive.json") // создание файла
 	if err != nil {
 		log.Fatal(err)
 	}
