@@ -174,7 +174,7 @@ func ValCursToCurs3(ret bool) {
 	archiveCurses = append(archiveCurses, cursOfOldDay)
 	fmt.Println(archiveCurses)
 
-	WriteFileValCursArchive(archiveCurses, ret) //когда заработает - сделать return archiveCurses и далее его в функцию Write File....
+	writeFileValCursArchive(archiveCurses, ret) //когда заработает - сделать return archiveCurses и далее его в функцию Write File....
 }
 
 //список доступных валют
@@ -279,20 +279,103 @@ func httpGet2() ValCurs {
 	return rate
 }
 
-// readTheFile : Чтение из файла ValCurs.bin
-func readTheFile() {
-	file, err := os.Open("D:/_development/_projects/DollarBill/db/ValCurs.bin")
+//***** getXML : вместо (httpGet) запрос xml и преобразование в удобный формат данных, запись в файл
+func getXML() {
+
+	fmt.Println("Запрос...https://www.cbr-xml-daily.ru/daily_utf8.xml")
+	responce, err := http.Get("https://www.cbr-xml-daily.ru/daily_utf8.xml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer responce.Body.Close()
+
+	byteValue, err := ioutil.ReadAll(responce.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = xml.Unmarshal(byteValue, &rate)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cursFormatted := convertCursFromCbToCursFormatted(rate) // Получили форматированные данные курсов 12 валют
+
+	archiveCurses = append(archiveCurses, cursFormatted) // записали эти  данных в архив курсов
+	writeFileValCursArchive(archiveCurses, false)        // записали эти  данных в json-файл архива курсов   (!) этот кусок можно убрать, если при закрытии программы будет сохраняться файл.
+
+	bV, err := json.Marshal(cursFormatted) //  записали эти данные в файл json
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	file, err := os.Create("D:/_development/_projects/DollarBill/db/ValCurs.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	file.Write(bV)
+	//fmt.Println("Данные получены и записаны в файл", file.Name())
+
+}
+
+//***** convertCursFromCbToCursFormatted : форматирует данные из xml и оставляет только используемые
+func convertCursFromCbToCursFormatted(cursXML ValCurs) Curs2 {
+	var cursF Curs2
+	//fmt.Println(cursXML.Date)
+	//fmt.Print("Запись полученных данных в структуру cursOfToday")
+	//cursOfToday.Date = rate.Date
+	DD, MM, YYYY := stringDateToInt(cursXML.Date)
+	cursF.YYYY = YYYY
+	cursF.MM = MM
+	cursF.DD = DD
+	k := 0
+	for i := 0; i < 34; i++ {
+		if i == 2 || i == 8 || i == 10 || i == 11 || i == 12 || i == 16 || i == 18 || i == 24 || i == 28 || i == 29 || i == 30 || i == 33 {
+			cursF.Valute[k].Name = cursXML.Valute[i].Name
+			cursF.Valute[k].CharCode = cursXML.Valute[i].CharCode
+			cursF.Valute[k].Value = stringToFloat(stringConvert(cursXML.Valute[i].Value))
+			k++
+		}
+	}
+	//fmt.Println("...complete")
+	return cursF
+}
+
+//***** readFile : Чтение из файла ValCurs.json
+func readFile() {
+	file, err := os.Open("D:/_development/_projects/DollarBill/db/ValCurs.json")
 	if err != nil {
 		fmt.Println(err)
 	}
 	defer file.Close()
 
-	data, err := ioutil.ReadFile("D:/_development/_projects/DollarBill/db/ValCurs.bin")
+	data, err := ioutil.ReadFile("D:/_development/_projects/DollarBill/db/ValCurs.json")
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	err = xml.Unmarshal(data, &offlineRate)
+	err = json.Unmarshal(data, &cursOfToday)
+	if err != nil {
+		log.Fatal(err)
+	}
+	returnMenu(true)
+}
+
+// readTheFile : Чтение из файла ValCurs.bin
+func readTheFile() {
+	file, err := os.Open("D:/_development/_projects/DollarBill/db/ValCurs.json")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer file.Close()
+
+	data, err := ioutil.ReadFile("D:/_development/_projects/DollarBill/db/ValCurs.json")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = json.Unmarshal(data, &offlineRate)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -325,7 +408,8 @@ func mainMenu() {
 	case 4:
 		DelFromStruct(false, true, true)
 	case 5:
-
+		readTheFile3(true)
+		fmt.Println(archiveCurses)
 	case 6:
 
 	case 7:
@@ -354,11 +438,16 @@ func techMenu() {
 
 	switch b {
 	case 1:
-		httpGet2()
-		ValCursToCurs(true)
+		getXML()
+		returnMenu(true)
+
+		//httpGet2()
+		//ValCursToCurs(true)
 	case 2:
-		readTheFile()
-		ValCursToCurs2(true, true)
+		readFile()
+
+		//readTheFile()
+		//ValCursToCurs2(true, true)
 	case 3:
 		FilterOp(true)
 	case 4:
@@ -499,7 +588,7 @@ func readTheFile3(ret bool) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	fmt.Println(archiveCurses)
 	returnMenu(ret)
 }
 
@@ -523,8 +612,8 @@ func WriteTheFile(op Order, ret bool) {
 	returnMenu(ret)
 }
 
-// WriteFileValCursArchive : записывает в файл ValCursArchive.json данные из среза ArchiveCurses
-func WriteFileValCursArchive(ac []Curs2, ret bool) {
+//***** writeFileValCursArchive : записывает в файл ValCursArchive.json данные из среза ArchiveCurses
+func writeFileValCursArchive(ac []Curs2, ret bool) {
 
 	byteValue, err := json.Marshal(ac)
 	if err != nil {
@@ -764,10 +853,10 @@ func SortArchive2(ac1 []Curs2, ret bool) []Curs2 {
 }
 
 func main() {
-	readTheFile()
-	ValCursToCurs2(false, false)
-	//readTheFile2(false)
-	//readTheFile3(true)
+	readFile()
+	//ValCursToCurs2(false, false)
+	readTheFile2(false)
+	readTheFile3(true)
 	defer mainMenu()
 
 	fmt.Println("func main")
