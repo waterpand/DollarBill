@@ -322,9 +322,6 @@ func getXML() {
 //***** convertCursFromCbToCursFormatted : форматирует данные из xml и оставляет только используемые
 func convertCursFromCbToCursFormatted(cursXML ValCurs) Curs2 {
 	var cursF Curs2
-	//fmt.Println(cursXML.Date)
-	//fmt.Print("Запись полученных данных в структуру cursOfToday")
-	//cursOfToday.Date = rate.Date
 	DD, MM, YYYY := stringDateToInt(cursXML.Date)
 	cursF.YYYY = YYYY
 	cursF.MM = MM
@@ -343,25 +340,46 @@ func convertCursFromCbToCursFormatted(cursXML ValCurs) Curs2 {
 }
 
 //***** readFile : Чтение из файла ValCurs.json
-func readFile() {
-	file, err := os.Open("D:/_development/_projects/DollarBill/db/ValCurs.json")
+func readFile(dbName string) {
+	/*
+	   Функция ничего не отдает наружу. А чтобы отдавала нужен один тип данных. можно отдавать наружу []byte,
+	   а потом, в зависимости от того, какой фал читался переводить данные в нужный тип ( err = json.Unmarshal(data, ...) )
+	*/
+
+	dbPath := "D:/_development/_projects/DollarBill/db/"
+
+	file, err := os.Open(dbPath + dbName)
 	if err != nil {
 		fmt.Println(err)
 	}
 	defer file.Close()
 
-	data, err := ioutil.ReadFile("D:/_development/_projects/DollarBill/db/ValCurs.json")
+	data, err := ioutil.ReadFile(dbPath + dbName)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	err = json.Unmarshal(data, &cursOfToday)
-	if err != nil {
-		log.Fatal(err)
+	if dbName == "ValCurs.json" {
+		err = json.Unmarshal(data, &cursOfToday)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else if dbName == "OperationDamp.json" {
+		err = json.Unmarshal(data, &op)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else if dbName == "ValCursArchive.json" {
+		err = json.Unmarshal(data, &archiveCurses)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
-	returnMenu(true)
+
+	//returnMenu(true)
 }
 
+/*
 // readTheFile : Чтение из файла ValCurs.bin
 func readTheFile() {
 	file, err := os.Open("D:/_development/_projects/DollarBill/db/ValCurs.json")
@@ -382,6 +400,8 @@ func readTheFile() {
 
 }
 
+*/
+
 // returnMenu : определяет будет ли возврат в основное меню или нет
 func returnMenu(ret bool) {
 	if ret == true {
@@ -399,16 +419,16 @@ func mainMenu() {
 
 	switch b {
 	case 1:
-		DelFromStruct(false, true, false)
+		delFromStruct(false, true, false)
 		Balans(true)
 	case 2:
 		rateCalculation(true, true)
 	case 3:
 		rateCalculation(false, true)
 	case 4:
-		DelFromStruct(false, true, true)
+		delFromStruct(false, true, true)
 	case 5:
-		readTheFile3(true)
+		//readTheFile3(true)
 		fmt.Println(archiveCurses)
 	case 6:
 
@@ -423,7 +443,7 @@ func mainMenu() {
 		fmt.Println("Выход")
 		os.Exit(0)
 	case 11:
-		DelFromStruct(true, false, true)
+		delFromStruct(true, false, true)
 
 	default:
 		fmt.Println("Введено неверное значение")
@@ -433,7 +453,7 @@ func mainMenu() {
 }
 
 func techMenu() {
-	fmt.Printf(" // Техническое меню:\n1 -- Вычитать данные из xml, записать в файл ValCurs.bin и записать данные в структуру cursOfToday\n2 -- Прочитать информацию из файла и записать в структуру cursOfToday\n3 -- Фильтр по текущей валюте \n4 -- Вывести список доступных валют \n5 -- Сменить валюту\n6 -- Прочитать из файла историю операций\n7 -- Записать историю операций в файл\n8 -- Возврвт в основное меню - mainMenu\n9 -- Выход в func main()\n11 -- Запрос архивного курса\n12 -- Печать archiveCurses\n13 -- Преобразование даты\n14 -- Сортировка архива\n0 -- Выход из программы\n")
+	fmt.Printf(" // Техническое меню:\n1 -- Вычитать данные из xml, записать в файл ValCurs.json и записать данные в структуру cursOfToday\n2 -- Прочитать информацию из файла и записать в структуру cursOfToday\n3 -- Фильтр по текущей валюте \n4 -- Вывести список доступных валют \n5 -- Сменить валюту\n6 -- Прочитать из файла историю операций\n7 -- Записать историю операций в файл\n8 -- Возврвт в основное меню - mainMenu\n9 -- Выход в func main()\n11 -- Запрос архивного курса\n12 -- Печать archiveCurses\n13 -- Преобразование даты\n14 -- Сортировка архива\n0 -- Выход из программы\n")
 	fmt.Scanln(&b)
 
 	switch b {
@@ -444,7 +464,7 @@ func techMenu() {
 		//httpGet2()
 		//ValCursToCurs(true)
 	case 2:
-		readFile()
+		readFile("ValCurs.json")
 
 		//readTheFile()
 		//ValCursToCurs2(true, true)
@@ -455,7 +475,7 @@ func techMenu() {
 	case 5:
 		ratePrint2(true)
 	case 6:
-		readTheFile2(true)
+		//readTheFile2(true)
 	case 7:
 		WriteTheFile(op, true)
 	case 8:
@@ -470,7 +490,7 @@ func techMenu() {
 		CursArchive(false)
 		ValCursToCurs3(true)
 	case 12:
-		PrintArchiveCurses(true)
+		PrintArchiveCurses(archiveCurses, true)
 		//fmt.Println(archiveCurses)
 		//returnMenu(true)
 	case 13:
@@ -500,7 +520,7 @@ func rateCalculation(buy, ret bool) { // расчет по выбранной в
 
 	rateOfToday = cursOfToday.Valute[a-1].Value
 
-	if Dd != cursOfToday.DD && Mm != cursOfToday.MM && YYyy != cursOfToday.YYYY {
+	if Dd != cursOfToday.DD || Mm != cursOfToday.MM || YYyy != cursOfToday.YYYY {
 		fmt.Println("Введите курс валюты (формат $$.$$$$):")
 		fmt.Scanln(&rateOfPurchase)
 	} else {
@@ -518,7 +538,7 @@ func rateCalculation(buy, ret bool) { // расчет по выбранной в
 
 	percentOfRate = ((rateOfToday / rateOfPurchase) - 1) * 10000
 	percentOfRate = math.Round(percentOfRate) * 0.01
-	fmt.Println("Текущий результат: \n", percentOfRate, "%\n", todayCurrency-sumOfPurchase, "руб.\n", offlineRate.Valute[a-1].Name, amountOfСurrency, "шт.")
+	fmt.Println("Текущий результат: \n", percentOfRate, "%\n", todayCurrency-sumOfPurchase, "руб.\n", cursOfToday.Valute[a-1].Name, amountOfСurrency, "шт.")
 	fmt.Println("----------------------------------------------------------------")
 
 	SafeOperation(cursOfToday.Valute[a-1].CharCode, dateOfPurchase, buy, true, rateOfPurchase, amountOfСurrency, ret)
@@ -550,7 +570,9 @@ func SafeOperation(ChC, D string, Opp, Fl bool, Pr, Q float64, ret bool) {
 	returnMenu(ret)
 }
 
-// readTheFile2 : Чтение из файла ValCurs.bin
+/*
+
+// readTheFile2 : Чтение из файла OperationDamp.json
 func readTheFile2(ret bool) {
 	file, err := os.Open("D:/_development/_projects/DollarBill/db/OperationDamp.json")
 	if err != nil {
@@ -570,6 +592,7 @@ func readTheFile2(ret bool) {
 
 	returnMenu(ret)
 }
+
 
 // readTheFile3 : Чтение из файла ValCursArchive.bin
 func readTheFile3(ret bool) {
@@ -591,6 +614,8 @@ func readTheFile3(ret bool) {
 	fmt.Println(archiveCurses)
 	returnMenu(ret)
 }
+
+*/
 
 // WriteTheFile : данная функция записывает в файл данные из структуры с записями всех операций
 func WriteTheFile(op Order, ret bool) {
@@ -632,47 +657,54 @@ func writeFileValCursArchive(ac []Curs2, ret bool) {
 	returnMenu(ret)
 }
 
-// DelFromStruct : вывод списка операций или удаления записей об операциях из структуры
-func DelFromStruct(del, usd, ret bool) {
-	if usd == true && op.Transaction[i].CharCode == cursOfToday.Valute[a-1].CharCode {
-		fmt.Printf("\nСписок операций по текущей валюте:\n")
+//***** delFromStruct : вывод списка операций или удаления записей об операциях из структуры
+func delFromStruct(del, usd, ret bool) {
+
+	if len(op.Transaction) == 0 {
+		fmt.Println("История операций пуста\nВозврат в меню")
 	} else {
-		fmt.Printf("\nСписок операций:\n")
-	}
-
-	/*
-		Попробовать оптимизировать этот кусок. Выглядит очень громоздко
-		"Покупка/продажа" убрать в переменную string, тогда будет одна строчка с Println
-	*/
-
-	for i := range op.Transaction {
 		if usd == true && op.Transaction[i].CharCode == cursOfToday.Valute[a-1].CharCode {
-			if op.Transaction[i].Operation == true {
-				fmt.Print(i+1, ")  ", op.Transaction[i].Date, " - Покупка ")
-			} else {
-				fmt.Print(i+1, ")  ", op.Transaction[i].Date, " - Продажа ")
-			}
-			fmt.Println(op.Transaction[i].Quantity, "", op.Transaction[i].CharCode, " по курсу ", op.Transaction[i].Price)
-		} else if usd == false {
-			if op.Transaction[i].Operation == true {
-				fmt.Print(i+1, ")  ", op.Transaction[i].Date, " - Покупка ")
-			} else {
-				fmt.Print(i+1, ")  ", op.Transaction[i].Date, " - Продажа ")
-			}
-			fmt.Println(op.Transaction[i].Quantity, "", op.Transaction[i].CharCode, " по курсу ", op.Transaction[i].Price)
+			fmt.Printf("\nСписок операций по текущей валюте:\n")
+		} else {
+			fmt.Printf("\nСписок операций:\n")
 		}
-	}
 
-	if del == true {
-		j := 100
-		fmt.Println("Выбрать номер удаляемой транзакции")
-		fmt.Scanln(&j)
-		j--
-
-		op.Transaction = append(op.Transaction[:j], op.Transaction[j+1:]...)
-
+		/*
+			Попробовать оптимизировать этот кусок. Выглядит очень громоздко
+			"Покупка/продажа" убрать в переменную string, тогда будет одна строчка с Println
+		*/
+		buySell := "Ошибка"
 		for i := range op.Transaction {
-			fmt.Println(i+1, op.Transaction[i])
+			if usd == true && op.Transaction[i].CharCode == cursOfToday.Valute[a-1].CharCode {
+				if op.Transaction[i].Operation == true {
+					buySell = " - Покупка "
+				} else {
+					buySell = " - Продажа "
+				}
+				fmt.Print(i+1, ")  ", op.Transaction[i].Date, buySell)
+				fmt.Println(op.Transaction[i].Quantity, "", op.Transaction[i].CharCode, " по курсу ", op.Transaction[i].Price)
+			} else if usd == false {
+				if op.Transaction[i].Operation == true {
+					buySell = " - Покупка "
+				} else {
+					buySell = " - Продажа "
+				}
+				fmt.Print(i+1, ")  ", op.Transaction[i].Date, buySell)
+				fmt.Println(op.Transaction[i].Quantity, "", op.Transaction[i].CharCode, " по курсу ", op.Transaction[i].Price)
+			}
+		}
+
+		if del == true {
+			j := 100
+			fmt.Println("Выбрать номер удаляемой транзакции")
+			fmt.Scanln(&j)
+			j--
+
+			op.Transaction = append(op.Transaction[:j], op.Transaction[j+1:]...)
+
+			for i := range op.Transaction {
+				fmt.Println(i+1, op.Transaction[i])
+			}
 		}
 	}
 
@@ -766,7 +798,7 @@ func CursArchive(ret bool) { //добавить функцию конверта�
 }
 
 // PrintArchiveCurses : Выводит в удобном виде срез archiveCurses
-func PrintArchiveCurses(ret bool) {
+func PrintArchiveCurses(archiveCurses []Curs2, ret bool) {
 
 	for i := range archiveCurses {
 		fmt.Print(archiveCurses[i].DD, ".", archiveCurses[i].MM, ".", archiveCurses[i].YYYY, "\n")
@@ -853,10 +885,12 @@ func SortArchive2(ac1 []Curs2, ret bool) []Curs2 {
 }
 
 func main() {
-	readFile()
-	//ValCursToCurs2(false, false)
-	readTheFile2(false)
-	readTheFile3(true)
+	readFile("ValCurs.json")
+	fmt.Println("1 -- ", cursOfToday)
+	readFile("OperationDamp.json")
+	fmt.Println("2 -- ", op)
+	readFile("ValCursArchive.json")
+	fmt.Println("3 -- ", archiveCurses)
 	defer mainMenu()
 
 	fmt.Println("func main")
